@@ -14,8 +14,6 @@ const host = (() => {
 		}
 	}
 
-	console.error(new Error('local net not fiend'));
-
 	return 'localhost';
 })();
 

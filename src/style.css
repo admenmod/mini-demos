@@ -44,3 +44,7 @@ body {
 		border-radius: 5px;
 	}
 }
+
+.GUI > div {
+	font-family: arkhip;
+}

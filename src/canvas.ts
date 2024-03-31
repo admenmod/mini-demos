@@ -5,46 +5,24 @@ import { CanvasLayers } from 'ver/CanvasLayers';
 import { TouchesController } from 'ver/TouchesController';
 
 
+export interface IBoundingRect {
+	x: number, y: number, width: number, height: number,
+	left: number, right: number, top: number, bottom: number
+}
 const virtualKeyboard = (navigator as any).virtualKeyboard;
-export const virtualKeyboard_geometrychange = new EventAsFunction<null, [boundingRect: {
-	x: number, y: number, width: number, height: number
-}]>(null);
+export const virtualKeyboard_geometrychange = new EventAsFunction<null, [boundingRect: IBoundingRect]>(null);
 
 if(virtualKeyboard) {
 	virtualKeyboard.overlaysContent = true;
 	virtualKeyboard.addEventListener('geometrychange', () => {
-		const { x, y, width, height } = virtualKeyboard.boundingRect;
-		virtualKeyboard_geometrychange({ x, y, width, height });
+		virtualKeyboard_geometrychange(virtualKeyboard.boundingRect.toJSON());
 	});
 }
 
 export const canvas = new CanvasLayers().init(document.querySelector('#canvas')!);
 export const mainloop = new MainLoop();
 export const viewport = new Viewport(canvas.create('main').canvas.getContext('2d')!);
-canvas.on('resize', size => viewport.size.set(size));
+canvas.on('resize', size => viewport.size.set(size), 1000);
 
 const GUIElement = document.querySelector<HTMLDivElement>('#GUI')!;
 export const touches = new TouchesController(GUIElement, e => e.currentTarget === GUIElement);
-
-
-export const process = new EventAsFunction<null, [dt: number]>(null);
-export const render = new EventAsFunction<null, [viewport: Viewport]>(null);
-
-
-mainloop.on('update', dt => {
-	process(dt);
-
-	viewport.clear();
-
-	viewport.ctx.save();
-	viewport.use();
-	render(viewport);
-	viewport.ctx.restore();
-
-	canvas.render();
-
-	touches.nullify(dt);
-});
-
-
-import('./main-scene.js');
