@@ -24,14 +24,24 @@ export class Sprite extends Node2D {
 		this.size.set(this.width, this.height);
 	}
 
+	public frame: [] | [x: number, y: number, w: number, h: number] = [];
+
+	public invertX: boolean = false;
+	public invertY: boolean = false;
+
 	protected _draw({ ctx }: Viewport): void {
 		if(!this.image) return;
 
+		if(this.invertX) ctx.scale(-1, 1);
+		if(this.invertY) ctx.scale(1, -1);
+
 		if(this.offset_angle !== 0) ctx.rotate(this.offset_angle);
 
-		ctx.drawImage(this.image,
+		if(!this.frame.length) ctx.drawImage(this.image,
 			this.offset.x - this.size.x/2, this.offset.y -this.size.y/2,
-			this.size.x, this.size.y
-		);
+			this.size.x, this.size.y);
+		else ctx.drawImage(this.image, ...this.frame,
+			this.offset.x - this.frame[2]/2, this.offset.y - this.frame[3]/2,
+			this.frame[2], this.frame[3]);
 	}
 }

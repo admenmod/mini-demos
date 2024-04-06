@@ -22,7 +22,7 @@ export class Joystick extends Control {
 
 	public touch: Touch | null = null;
 
-	public get value(): number { return this.core_offset.module / (this.radius0-this.radius1); }
+	public get value(): number { return Math.floor(this.core_offset.module / (this.radius0-this.radius1) * 1e6)/1e6; }
 	public get angle(): number {
 		return this._angle = this.value ? Math.mod(this.core_offset.angle + this.angle_offset) : this._angle;
 	}

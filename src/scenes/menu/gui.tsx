@@ -13,7 +13,7 @@ export const GUI: FC = () => {
 		display: 'grid',
 		gap: '10px'
 	}}>
-		<button style={buttonStyle} onClick={() => $start('Mini')}>mini</button>
-		<button style={buttonStyle} onClick={() => $start('Maps')}>maps</button>
+		<button style={buttonStyle} onClick={() => $start('Mini')}>Mini</button>
+		<button style={buttonStyle} onClick={() => $start('Cats')}>Cats</button>
 	</div>
 }

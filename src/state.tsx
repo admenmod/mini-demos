@@ -4,11 +4,11 @@ import { FunctionIsEvent } from 'ver/events';
 
 import * as Menu from './scenes/menu/index.js';
 import * as Mini from './scenes/mini/index.js';
-import * as Maps from './scenes/maps/index.js';
+import * as Cats from './scenes/cats/index.js';
 
 
 export type scene_name = keyof typeof scenes;
-export const scenes = { Menu, Mini, Maps } as const;
+export const scenes = { Menu, Mini, Cats } as const;
 
 export const $selected_scene_name = atom<scene_name>('Menu');
 

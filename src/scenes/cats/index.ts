@@ -1,4 +1,4 @@
-export const NAME = 'Maps';
+export const NAME = 'Cats';
 
 export * from './state.js';
 export * from './gui.js';
