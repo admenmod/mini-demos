@@ -28,5 +28,5 @@ export const $stop: FunctionIsEvent<null, [name: scene_name], (name: scene_name)
 new FunctionIsEvent(null, name => $stop.emit(name));
 
 
-$stop.on(name => scenes[name].stop());
-$start.on(name => scenes[name].start());
+$stop.on(name => scenes[name].exit());
+$start.on(name => scenes[name].init());

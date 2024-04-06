@@ -26,7 +26,8 @@
 		"baseUrl": ".",
 		"outDir": "./dist/",
 		"paths": {
-			"ver/*": ["src/ver/*.js"]
+			"ver/*": ["src/ver/*.js"],
+			"engine/*": ["src/lib/*"]
 		}
 	},
 	"include": ["src"],

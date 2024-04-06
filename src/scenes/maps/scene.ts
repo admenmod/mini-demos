@@ -1,12 +1,50 @@
 import { Vector2 } from 'ver/Vector2';
-import { Event, EventAsFunction, EventDispatcher } from 'ver/events';
-import { math as Math } from 'ver/helpers';
+import { Event, EventDispatcher } from 'ver/events';
+import { math as Math, loadImage } from 'ver/helpers';
 import { Animation } from 'ver/Animation';
 import type { Touch } from 'ver/TouchesController';
 
+import { Node } from 'engine/scenes/Node.js';
+import { ProcessSystem } from 'engine/scenes/Node.js';
+import { RenderSystem } from 'engine/scenes/CanvasItem.js';
+import { ControllersSystem } from 'engine/scenes/Control.js';
+
 import * as ANIM from 'src/animations.js';
 import { touches, viewport } from 'src/canvas.js';
-import { process, render } from './index.js';
+import { $selectData, init, process, render } from './state.js';
+
+import { MainScene } from './scenes/MainScene.js';
+
+
+export const processSystem = new ProcessSystem();
+export const renderSystem = new RenderSystem();
+export const controllersSystem = new ControllersSystem(touches, viewport);
+
+process.on(dt => {
+	controllersSystem.update(dt);
+	processSystem.update(dt);
+});
+
+render.on(viewport => {
+	renderSystem.update(viewport);
+});
+
+
+init.on(async () => {
+	await Node.load();
+	const root_node = new Node();
+	await root_node.init();
+
+	processSystem.addRoot(root_node);
+	renderSystem.addRoot(root_node);
+	controllersSystem.addRoot(root_node);
+
+	await MainScene.load();
+	const main_scene = new MainScene();
+	await main_scene.init();
+
+	root_node.addChild(main_scene);
+});
 
 
 export const anims = new class extends EventDispatcher {
@@ -17,20 +55,18 @@ export const anims = new class extends EventDispatcher {
 		this.anims.push(anim);
 
 		await anim.run(...args);
-		this.del(anim);
+		this.del(gen);
 
 		return anim;
 	}
-	public del<T extends any[]>(anim: Animation<T>): Animation<T> {
-		const l = this.anims.indexOf(anim);
-		if(!~l) return anim;
+	public del<T extends any[]>(gen: Animation.Generator<T>): void {
+		const l = this.anims.findIndex(it => it.generator === gen);
+		if(!~l) return;
 		this.anims.splice(l, 1);
-
-		return anim;
 	}
 }
 
-process.on(dt => { for(const anim of anims.anims) anim.tick(dt); }, 10);
+process.on(dt => { for(const anim of anims.anims) anim.tick(dt); }, -1000);
 
 
 const t = new Vector2();
@@ -40,10 +76,18 @@ let touch: Touch | null = null;
 let current_item = 0;
 
 render.on(({ ctx }) => {
+	ctx.save();
+	viewport.use();
+
 	if(touch = touches.findTouch() || touch) {
 		if(touch.isPress()) {
 			current_item += 1;
 			current_item %= arr.length;
+
+			$selectData({
+				name: (current_item + 1).toString(),
+				position: arr[current_item].movement!.position.buf()
+			});
 
 			rect_pos.set(viewport.transformFromScreenToViewport(touch.pos.buf()));
 			anims.run(ANIM.moveTime, viewport.size, t.set());
@@ -78,6 +122,8 @@ render.on(({ ctx }) => {
 	ctx.setLineDash([m/100*4, m/100, m/100*4]);
 	ctx.strokeStyle = '#eeeeee';
 	ctx.strokeRect(rect_pos.x -size.x/2, rect_pos.y -size.y/2, size.x, size.y);
+
+	ctx.restore();
 });
 
 
@@ -114,14 +160,11 @@ const $movement = {
 };
 
 
-const arr: IItem[] = [];
-
-arr.push({
+const arr: IItem[] = [{
 	movement: $movement.setup()
-});
-arr.push({
+}, {
 	movement: $movement.setup()
-});
+}];
 
 
 process.on(dt => {
@@ -130,22 +173,23 @@ process.on(dt => {
 			$movement.update(dt, item);
 
 			const { position, velosity } = item.movement;
-			const screen = viewport.scale.buf().inc(viewport.size);
+			const screen = viewport.scale.buf().inc(viewport.size).sub(6);
+			const pos = viewport.position.buf();
 
-			if(position.x < -screen.x/2) {
-				position.x = -screen.x/2;
+			if(position.x < pos.x + -screen.x/2) {
+				position.x = pos.x + -screen.x/2;
 				velosity.x *= -1;
 			}
-			if(position.x > screen.x/2) {
-				position.x = screen.x/2;
+			if(position.x > pos.x + screen.x/2) {
+				position.x = pos.x + screen.x/2;
 				velosity.x *= -1;
 			}
-			if(position.y < -screen.y/2) {
-				position.y = -screen.y/2;
+			if(position.y < pos.y + -screen.y/2) {
+				position.y = pos.y + -screen.y/2;
 				velosity.y *= -1;
 			}
-			if(position.y > screen.y/2) {
-				position.y = screen.y/2;
+			if(position.y > pos.y + screen.y/2) {
+				position.y = pos.y + screen.y/2;
 				velosity.y *= -1;
 			}
 		}
@@ -153,6 +197,9 @@ process.on(dt => {
 });
 
 render.on(({ ctx }) => {
+	ctx.save();
+	viewport.use();
+
 	for(const item of arr) {
 		if(!$movement.is(item)) continue;
 
@@ -164,4 +211,6 @@ render.on(({ ctx }) => {
 		ctx.fill();
 		ctx.closePath();
 	}
+
+	ctx.restore();
 });

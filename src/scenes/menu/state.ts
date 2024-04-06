@@ -1,5 +1,5 @@
 import { atom } from 'nanostores';
-import { EventAsFunction } from 'ver/events';
+import { EventAsFunction, FunctionIsEvent } from 'ver/events';
 import type { Viewport } from 'ver/Viewport';
 
 import { canvas, mainloop, touches, viewport } from 'src/canvas.js';
@@ -10,7 +10,9 @@ export const process = new EventAsFunction<null, [dt: number]>(null);
 export const render = new EventAsFunction<null, [viewport: Viewport]>(null);
 
 
-export const start = () => {
+export const init: FunctionIsEvent<null, [], () => Promise<void>> = new FunctionIsEvent(null, async () => {
+	await init.await();
+
 	mainloop.on('update', dt => {
 		process(dt);
 
@@ -24,8 +26,14 @@ export const start = () => {
 
 		touches.nullify(dt);
 	}, 0, NAME);
-};
 
-export const stop = () => {
+	mainloop.start();
+});
+
+export const exit: FunctionIsEvent<null, [], () => Promise<void>> = new FunctionIsEvent(null, async () => {
+	await exit.await();
+
+	mainloop.stop();
+
 	mainloop.off('update', NAME);
-};
+});
