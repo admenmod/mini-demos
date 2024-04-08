@@ -15,6 +15,8 @@ export class SystemInfo extends Node2D {
 	public stats: Record<string, string> = {};
 
 	protected async _init(): Promise<void> {
+		this.zIndex = 1000;
+
 		this.positionAsRelative = false;
 		this.rotationAsRelative = false;
 		this.scaleAsRelative = false;

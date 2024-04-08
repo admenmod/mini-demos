@@ -9,7 +9,12 @@ type Image = InstanceType<typeof Image>;
 
 
 export class Sprite extends Node2D {
-	public image?: Image;
+	#image?: Image;
+	public get image() { return this.#image; }
+	public set image(v) {
+		this.#image = v;
+		this.size.set(this.width, this.height);
+	}
 
 	public get src() { return this.image?.src || ''; }
 	public get width() { return this.image?.naturalWidth || 0; }
@@ -21,7 +26,6 @@ export class Sprite extends Node2D {
 
 	public async load(...args: Parameters<Loader['loadImage']>): Promise<void> {
 		this.image = await Loader.instance().loadImage(...args);
-		this.size.set(this.width, this.height);
 	}
 
 	#frame: [] | [x: number, y: number, w: number, h: number] = [];
