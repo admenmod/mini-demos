@@ -24,7 +24,17 @@ export class Sprite extends Node2D {
 		this.size.set(this.width, this.height);
 	}
 
-	public frame: [] | [x: number, y: number, w: number, h: number] = [];
+	#frame: [] | [x: number, y: number, w: number, h: number] = [];
+	public get frame() { return this.#frame; }
+	public set frame(v: [] | [x: number, y: number, w: number, h: number] | {
+		x: number, y: number, w: number, h: number
+	}) {
+		if('x' in v) v = [v.x, v.y, v.w, v.h];
+
+		this.#frame = v;
+		if(!v.length) this.size.set(this.width, this.height);
+		else  this.size.set(v[2], v[3]);
+	}
 
 	public invertX: boolean = false;
 	public invertY: boolean = false;
@@ -37,11 +47,8 @@ export class Sprite extends Node2D {
 
 		if(this.offset_angle !== 0) ctx.rotate(this.offset_angle);
 
-		if(!this.frame.length) ctx.drawImage(this.image,
+		ctx.drawImage(this.image, ...this.frame as [],
 			this.offset.x - this.size.x/2, this.offset.y -this.size.y/2,
 			this.size.x, this.size.y);
-		else ctx.drawImage(this.image, ...this.frame,
-			this.offset.x - this.frame[2]/2, this.offset.y - this.frame[3]/2,
-			this.frame[2], this.frame[3]);
 	}
 }

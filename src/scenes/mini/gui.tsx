@@ -8,7 +8,7 @@ export const GUI: FC = () => {
 
 	return <div theme-custom class='GUI' style={{
 		alignSelf: 'start', 
-		justifySelf: 'start'
+		justifySelf: 'center'
 	}}>
 		<div style={{
 			margin: '10px',

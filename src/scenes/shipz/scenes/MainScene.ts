@@ -11,12 +11,15 @@ import { Node2D } from 'engine/scenes/Node2D.js';
 import { Camera2D } from 'engine/scenes/Camera2D.js';
 import { SystemInfo } from 'engine/scenes/gui/SystemInfo.js';
 import { Sprite } from 'engine/scenes/Sprite.js';
-import { Platform } from './Platform.js';
-import { Cat, cat_anims } from './Cat.js';
+import { Ship } from './Ship.js';
 
 import { touches, viewport } from 'src/canvas.js';
-import { anims, physicsSystem } from '../scene.js';
 import { audioContorller } from '../state.js';
+
+
+const vec1 = new Vector2(1, 0).normalize(100).set();
+const vec2 = new Vector2(1, 0).normalize(100).set();
+const vec3 = new Vector2(1, 0).normalize(100).set();
 
 
 class Info extends Node2D {
@@ -24,7 +27,7 @@ class Info extends Node2D {
 	protected async _init(): Promise<void> { this.draw_distance = Math.INF; }
 	protected _ready(): void { this.zIndex = 10000; }
 
-	protected _draw({ ctx }: Viewport): void {
+	protected _draw({ ctx, size }: Viewport): void {
 		const center = Vector2.ZERO;
 		const a = 30;
 
@@ -35,6 +38,34 @@ class Info extends Node2D {
 		ctx.lineTo(center.x, center.y+a);
 		ctx.moveTo(center.x-a, center.y);
 		ctx.lineTo(center.x+a, center.y);
+		ctx.stroke();
+
+
+		ctx.resetTransform();
+		ctx.globalAlpha = 0.5;
+		ctx.lineWidth = 5;
+
+		const c = size.buf().div(2);
+
+		const v1 = c.buf().add(vec1);
+		ctx.beginPath();
+		ctx.strokeStyle = 'red';
+		ctx.moveTo(c.x, c.y);
+		ctx.lineTo(v1.x, v1.y);
+		ctx.stroke();
+
+		const v2 = c.buf().add(vec2);
+		ctx.beginPath();
+		ctx.strokeStyle = 'green';
+		ctx.moveTo(c.x, c.y);
+		ctx.lineTo(v2.x, v2.y);
+		ctx.stroke();
+
+		const v3 = c.buf().add(vec3);
+		ctx.beginPath();
+		ctx.strokeStyle = 'blue';
+		ctx.moveTo(c.x, c.y);
+		ctx.lineTo(v3.x, v3.y);
 		ctx.stroke();
 	}
 }
@@ -54,30 +85,24 @@ export class MainScene extends Control {
 		SystemInfo,
 		Info,
 		Joystick,
-		Cat,
-		bPlatform: Platform
+		Ship
 	}}
 	// aliases
 	public get $camera() { return this.get('Camera2D'); }
 	public get $gridMap() { return this.get('GridMap'); }
 	public get $info() { return this.get('Info'); }
-	public get $cat() { return this.get('Cat'); }
 	public get $joystick() { return this.get('Joystick'); }
+	public get $ship() { return this.get('Ship'); }
 
 	public sensor_camera = new SensorCamera();
 
 	protected async _init(this: MainScene): Promise<void> {
 		await super._init();
 
-		physicsSystem.gravity.set(0, 1);
-
 		this.$camera.viewport = viewport;
 		this.$camera.current = true;
 		this.$camera.on('PreProcess', dt => {
-			this.$camera.position.moveTime(this.$cat.position.buf()
-				.sub(0, this.$camera.size.y/2)
-				.add(0, this.$cat.size.y/2 * this.$cat.scale.y)
-				.add(0, 50), 100, 5);
+			this.$camera.position.moveTime(this.$ship.position.buf(), 5);
 
 			// this.sensor_camera.update(dt, touches, this.$camera);
 
@@ -91,42 +116,6 @@ export class MainScene extends Control {
 		this.$info.self = this;
 
 		await audioContorller.load('click', 'assets/audio/play.wav');
-
-
-		this.get('bPlatform').size.set(1000, 20);
-
-		const cat = this.$cat;
-		cat.position.add(0, -100);
-
-
-		// this.on('input:press', () => {
-		// 	current_anim = 'running';
-		// 	anims.run(cat_anims.up, cat, 50)
-		// 	.then(() => anims.run(cat_anims.running, cat))
-		// 	.then(() => anims.run(cat_anims.sit, cat, 50));
-		//
-		// 	delay(3000, () => {
-		// 		current_anim = 'sit';
-		// 	});
-		//
-		// 	// audioContorller.play('click');
-		// });
-
-
-		cat.state.on(next => {
-			if(next === 'running') {
-				anims.del(cat_anims.sit);
-				cat.current_anim = 'running';
-				anims.run(cat_anims.running, cat.$sprite);
-				return;
-			}
-			if(next === 'idle') {
-				anims.del(cat_anims.running);
-				cat.current_anim = 'sit';
-				anims.run(cat_anims.sit, cat.$sprite, 50);
-				return;
-			}
-		});
 
 
 		viewport.on('resize', size => {
@@ -143,25 +132,27 @@ export class MainScene extends Control {
 	}
 
 	protected _process(this: MainScene, dt: number): void {
-		const cat = this.$cat;
+		const ship = this.$ship;
 		const joystick = this.$joystick;
 
 
 		let touch = touches.findTouch();
 		if(touch && touch.pos.x > viewport.size.x/2) {
-			cat.velosity.y -= 20;
+			// NOTE: gun shoot
 		}
 
 
-		let speed = 0.5;
+		const speed = 0.2;
+		const angular_speed = 0.002;
 
-		if(!joystick.value) cat.state('idle');
+		if(!joystick.value) ship.state('idle');
 		else {
-			cat.state('running');
-			const dir = Math.sign(Math.cos(joystick.angle));
-			if(dir > 0) cat.$sprite.invertX = true;
-			if(dir < 0) cat.$sprite.invertX = false;
-			cat.velosity.add(dt/16 * speed * joystick.value * dir, 0);
+			ship.state('running');
+
+			const dir = Math.mod(joystick.angle - ship.rotation, -Math.PI, Math.PI);
+			ship.angular_velosity += angular_speed * dir;
+
+			ship.velosity.moveAngle(dt/16 * speed * joystick.value, ship.rotation);
 		}
 	}
 }

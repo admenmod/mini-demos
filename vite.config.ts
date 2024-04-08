@@ -20,5 +20,7 @@ const host = (() => {
 
 export default defineConfig({
 	plugins: [tsconfigPaths(), preact()],
-	server: { host, port }
+	server: {
+		host, port
+	}
 });

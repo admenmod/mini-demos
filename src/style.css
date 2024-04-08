@@ -1,6 +1,6 @@
 @font-face {
 	font-family: arkhip;
-	src: url(./assets/fonts/arkhip_font.ttf);
+	src: url(/assets/fonts/arkhip_font.ttf);
 }
 
 :root {
@@ -27,8 +27,13 @@ body {
 
 	accent-color: color-mix(in oklab, var(--main-color) 70%, #000000);
 
+	div {
+		font-family: arkhip, monospace;
+	}
+
 	button {
 		user-select: none;
+		font-family: arkhip, monospace;
 	}
 
 	input, button {
@@ -45,7 +50,6 @@ body {
 	}
 }
 
-.GUI > div {
+.GUI {
 	user-select: none;
-	font-family: arkhip;
 }

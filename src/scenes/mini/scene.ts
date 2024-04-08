@@ -1,12 +1,12 @@
 import { Vector2 } from 'ver/Vector2';
-import { Event, EventAsFunction, EventDispatcher } from 'ver/events';
+import { Event, EventDispatcher } from 'ver/events';
 import { math as Math } from 'ver/helpers';
 import { Animation } from 'ver/Animation';
 import type { Touch } from 'ver/TouchesController';
 
 import * as ANIM from 'src/animations.js';
 import { touches, viewport } from 'src/canvas.js';
-import { process, render } from './index.js';
+import { init, process, render } from './state.js';
 
 
 export const anims = new class extends EventDispatcher {
@@ -93,7 +93,7 @@ interface IItem {
 }
 
 
-const GRAVITY = 0.01;
+const GRAVITY = new Vector2(0, 0.01);
 
 const $movement = {
 	D: 0.97 as const,
@@ -108,7 +108,7 @@ const $movement = {
 	}},
 
 	update(dt: number, { movement }: { movement: IMovement }) {
-		movement.velosity.add(0, GRAVITY).buf();
+		movement.velosity.add(GRAVITY).buf();
 		movement.position.add((movement.effect?.(movement.velosity) || movement.velosity.inc(this.D)).buf().inc(dt));
 	}
 };

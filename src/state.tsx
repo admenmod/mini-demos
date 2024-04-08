@@ -5,10 +5,19 @@ import { FunctionIsEvent } from 'ver/events';
 import * as Menu from './scenes/menu/index.js';
 import * as Mini from './scenes/mini/index.js';
 import * as Cats from './scenes/cats/index.js';
+import * as Shipz from './scenes/shipz/index.js';
+
+
+export const $is_fullscreen = atom(false);
+setInterval(() => $is_fullscreen.set(Boolean(document.fullscreenElement)), 3000);
+
+const app = document.querySelector<HTMLDivElement>('#app')!;
+//@ts-ignore
+app.ondblclick = e => (e.currentTarget as HTMLDivElement).webkitRequestFullscreen();
 
 
 export type scene_name = keyof typeof scenes;
-export const scenes = { Menu, Mini, Cats } as const;
+export const scenes = { Menu, Mini, Cats, Shipz } as const;
 
 export const $selected_scene_name = atom<scene_name>('Menu');
 
