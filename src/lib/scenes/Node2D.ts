@@ -54,7 +54,7 @@ export class Node2D extends CanvasItem {
 
 
 	public getRelativePosition(nl: number = 0, arr: Node2D[] = this[PARENT_CACHE]): Vector2 {
-		if(!this.positionAsRelative || !arr.length) return this.position.buf();
+		if(!this.positionAsRelative || !arr.length) return this.position.new();
 
 		const l = Math.min(nl, arr.length, Node.MAX_NESTING);
 		const acc = new Vector2();
@@ -85,10 +85,10 @@ export class Node2D extends CanvasItem {
 	}
 
 	public getRelativeScale(nl: number = 0, arr: Node2D[] = this[PARENT_CACHE]): Vector2 {
-		if(!this.scaleAsRelative) return this.scale.buf();
+		if(!this.scaleAsRelative) return this.scale.new();
 
 		const l = Math.min(nl, arr.length, Node.MAX_NESTING);
-		const acc = this.scale.buf();
+		const acc = this.scale.new();
 
 		for(let i = 0; i < l; i++) {
 			acc.inc(arr[i].scale);

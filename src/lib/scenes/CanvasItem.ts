@@ -64,7 +64,7 @@ export class CanvasItem extends Node {
 
 	private _alpha: number = 1;
 	public get alpha() { return this._alpha; }
-	public set alpha(v) { this._alpha = Math.clamped(0, v, 1); }
+	public set alpha(v) { this._alpha = Math.clamp(0, v, 1); }
 
 	protected _zAsRelative: boolean = true;
 	public get zAsRelative() { return this._zAsRelative; }

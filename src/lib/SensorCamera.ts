@@ -69,14 +69,14 @@ export class SensorCamera extends EventDispatcher {
 				this.slidingSpeed.moveTime(Vector2.ZERO, this.delay*15 / dt);
 
 				if(!this.slidingSpeed.isSame(Vector2.ZERO)) {
-					viewport.position.sub(this.slidingSpeed.buf().inc(viewport.scale));
+					viewport.position.sub(this.slidingSpeed.new().inc(viewport.scale));
 					(this as SensorCamera).emit('move', viewport.position);
 				}
 
-				if(this.touch = touches.findTouch()) this.fixpos = viewport.position.buf();
+				if(this.touch = touches.findTouch()) this.fixpos = viewport.position.new();
 			} else {
 				if(this.touch.isDown() && !this.touch.d.isSame(Vector2.ZERO)) {
-					viewport.position.set(this.fixpos.buf().sub(this.touch.d.buf().inc(viewport.scale)));
+					viewport.position.set(this.fixpos.new().sub(this.touch.d.inc(viewport.scale)));
 					(this as SensorCamera).emit('move', viewport.position);
 				}
 
@@ -94,14 +94,14 @@ export class SensorCamera extends EventDispatcher {
 		if(this.isScaling) {
 			if(this.touch1?.pos.isSame(Vector2.ZERO) || this.touch2?.pos.isSame(Vector2.ZERO)) return console.log('error');
 
-			if(this.touch1 = touches.findTouch(t => t.id === 0) || this.touch1) {
-				if(this.touch2 = touches.findTouch(t => t.id === 1) || this.touch2) {
+			if(this.touch1 = touches.findTouch(t => t.id === 0 && t.isPress()) || this.touch1) {
+				if(this.touch2 = touches.findTouch(t => t.id === 1 && t.isPress()) || this.touch2) {
 					const zTouch = new Vector2(
 						Math.min(this.touch1.pos.x, this.touch2.pos.x),
 						Math.min(this.touch1.pos.y, this.touch2.pos.y)
 					);
-					const rectsize = this.touch1.pos.buf().sub(this.touch2.pos).abs();
-					const center = zTouch.buf().add(rectsize.buf().div(2));
+					const rectsize = this.touch1.pos.new().sub(this.touch2.pos).abs();
+					const center = zTouch.new().add(rectsize.new().div(2));
 
 					if(this.touch2.isPress()) {
 						this.touch = null;
@@ -114,20 +114,20 @@ export class SensorCamera extends EventDispatcher {
 						this.fix.center.set(center);
 					}
 
-					viewport.scale.set(this.fix.scale.buf().inc(this.fix.rectsize.module / rectsize.module));
-					viewport.scale.x = Math.clamped(this.minscale, viewport.scale.x, this.maxscale);
-					viewport.scale.y = Math.clamped(this.minscale, viewport.scale.y, this.maxscale);
-					(this as SensorCamera).emit('scale', viewport.scale.buf());
+					viewport.scale.set(this.fix.scale.new().inc(this.fix.rectsize.module / rectsize.module));
+					viewport.scale.x = Math.clamp(this.minscale, viewport.scale.x, this.maxscale);
+					viewport.scale.y = Math.clamp(this.minscale, viewport.scale.y, this.maxscale);
+					(this as SensorCamera).emit('scale', viewport.scale);
 
 					if(this.isMoveing || this.isMovingOnScaling) {
-						viewport.position.set(this.fix.position.buf().add(
-							this.fix.center.buf().sub(center).inc(viewport.scale)
+						viewport.position.set(this.fix.position.new().add(
+							this.fix.center.new().sub(center).inc(viewport.scale)
 						));
 						if(this.boundingBox) {
-							viewport.position.x = Math.clamped(this.boundingBox.l, viewport.scale.x, this.boundingBox.r);
-							viewport.position.y = Math.clamped(this.boundingBox.t, viewport.scale.y, this.boundingBox.b);
+							viewport.position.x = Math.clamp(this.boundingBox.l, viewport.scale.x, this.boundingBox.r);
+							viewport.position.y = Math.clamp(this.boundingBox.t, viewport.scale.y, this.boundingBox.b);
 						}
-						(this as SensorCamera).emit('move', viewport.position.buf());
+						(this as SensorCamera).emit('move', viewport.position);
 					}
 
 					if(this.touch2.isUp()) this.touch1 = this.touch2 = null;

@@ -10,12 +10,12 @@ export class GridMap extends Node2D {
 
 	public tile = new Vector2(50, 50);
 	public tile_scale = new Vector2(1, 1);
-	public tile_offset = new Vector2(0, 0, (x, y) => {
-		this.tile_offset[0] = Math.clamped(-this.tile.x, x, this.tile.x);
-		this.tile_offset[1] = Math.clamped(-this.tile.y, y, this.tile.y);
+	public tile_offset = new Vector2(0, 0, vec => {
+		this.tile_offset[0] = Math.clamp(-this.tile.x, vec.x, this.tile.x);
+		this.tile_offset[1] = Math.clamp(-this.tile.y, vec.y, this.tile.y);
 	});
 
-	public size: Vector2 = new Vector2(0, 0, (x, y) => this.draw_distance = this.size.module);
+	public size = new Vector2(0, 0, vec => this.draw_distance = vec.module);
 	public scale = new Vector2(1, 1);
 	public offset = new Vector2();
 
@@ -36,12 +36,12 @@ export class GridMap extends Node2D {
 	}
 
 	protected _draw({ ctx, scale }: Viewport): void {
-		const size = this.size.buf();
-		const zero = size.buf().div(2).invert().add(this.offset);
-		const tile = this.tile.buf().inc(this.tile_scale);
+		const size = this.size.new();
+		const zero = size.new().div(2).invert().add(this.offset);
+		const tile = this.tile.new().inc(this.tile_scale);
 
-		const scroll = this.scroll.buf().add(this.tile_offset.buf().inc(this.tile_scale)).add(this.offset);
-		const counts = size.buf().div(tile).div(2).add(1).ceilToZero();
+		const scroll = this.scroll.new().add(this.tile_offset.new().inc(this.tile_scale)).add(this.offset);
+		const counts = size.new().div(tile).div(2).add(1).ceilToZero();
 
 
 		// clip area

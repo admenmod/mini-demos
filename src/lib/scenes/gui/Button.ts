@@ -13,7 +13,7 @@ export class Button extends Control {
 	public get text() { return this._text; }
 	public set text(v) { this._text = v; }
 
-	public size: Vector2 = new Vector2(120, 30, (x, y) => this.draw_distance = this.size.module);
+	public size = new Vector2(120, 30, vec => this.draw_distance = vec.module);
 
 
 	public style: Partial<CSSStyleRule['style']> = {};

@@ -6,6 +6,10 @@ import * as Menu from './scenes/menu/index.js';
 import * as Mini from './scenes/mini/index.js';
 import * as Cats from './scenes/cats/index.js';
 import * as Shipz from './scenes/shipz/index.js';
+import * as Targets_captured from './scenes/targets_captured/index.js';
+import * as Animation from './scenes/animation/index.js';
+import * as Test from './scenes/test/index.js';
+import * as Input_code from './scenes/input_code/index.js';
 
 
 export const $is_fullscreen = atom(false);
@@ -17,7 +21,7 @@ app.ondblclick = e => (e.currentTarget as HTMLDivElement).webkitRequestFullscree
 
 
 export type scene_name = keyof typeof scenes;
-export const scenes = { Menu, Mini, Cats, Shipz } as const;
+export const scenes = { Menu, Mini, Cats, Shipz, Targets_captured, Animation, Test, Input_code } as const;
 
 export const $selected_scene_name = atom<scene_name>('Menu');
 

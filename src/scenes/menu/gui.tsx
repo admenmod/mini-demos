@@ -17,24 +17,31 @@ export const GUI: FC = () => {
 		<div theme-custom class='GUI' style={{
 			display: 'grid',
 			gap: '10px',
-			width: 'max-content',
+			gridTemplate: 'repeat(4, auto) / repeat(2, auto)',
+			gridAutoColumns: 'max-content',
+			gridAutoFlow: 'column dense',
+			padding: '20px',
+			zIndex: 1,
 
 			alignSelf: 'center',
-			justifySelf: 'center',
-			gridArea: '1/1/1/1'
+			justifySelf: 'center'
 		}}>
+			<button style={buttonStyle} onClick={() => $start('Test')}>Test</button>
 			<button style={buttonStyle} onClick={() => $start('Mini')}>Mini</button>
 			<button style={buttonStyle} onClick={() => $start('Cats')}>Cats</button>
 			<button style={buttonStyle} onClick={() => $start('Shipz')}>Shipz</button>
+			<button style={buttonStyle} onClick={() => $start('Animation')}>Animation</button>
+			<button style={buttonStyle} onClick={() => $start('Input_code')}>Input code</button>
+			<button style={buttonStyle} onClick={() => $start('Targets_captured')}>Targets captured</button>
 		</div>
 
 		{ !is_fullscreen ? <div theme-custom class='GUI' style={{
-			margin: '5px',
+			paddingBottom: '5px',
 			opacity: 0.5,
+			fontSize: '0.7rem',
 			fontFamily: 'arkhip, monospace',
 
-			alignSelf: 'end',
-			gridArea: '1/1/1/1'
+			alignSelf: 'end'
 		}}>Двойной клик - полноэкранный режим</div> : '' }
 	</>
 }

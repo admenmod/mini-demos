@@ -40,67 +40,67 @@ export class ControllersSystem extends System<typeof Control> {
 
 
 		const fn_touchstart = touches['@touchstart'].on(touch => {
-			const tpos = viewport.transformFromScreenToViewport(touch.pos.buf());
-			const local = viewport.transformToLocal(touch.pos.buf());
+			const tpos = viewport.transformFromScreenToViewport(touch.pos.new());
+			const local = viewport.transformToLocal(touch.pos.new());
 
 			this['@input:press'].emit({ pos: tpos, local, touch, viewport });
 
 			for(const item of this._items) {
 				const position = item.globalPosition;
-				const pos = tpos.buf().sub(position).rotate(-item.globalRotation).add(position);
+				const pos = tpos.new().sub(position).rotate(-item.globalRotation).add(position);
 
 				item.emit('input:press', { pos, local, touch, viewport });
 			}
 		});
 		const fn_touchend = touches['@touchend'].on(touch => {
-			const tpos = viewport.transformFromScreenToViewport(touch.pos.buf());
-			const local = viewport.transformToLocal(touch.pos.buf());
+			const tpos = viewport.transformFromScreenToViewport(touch.pos.new());
+			const local = viewport.transformToLocal(touch.pos.new());
 
 			this['@input:up'].emit({ pos: tpos, local, touch, viewport });
 
 			for(const item of this._items) {
 				const position = item.globalPosition;
-				const pos = tpos.buf().sub(position).rotate(-item.globalRotation).add(position);
+				const pos = tpos.new().sub(position).rotate(-item.globalRotation).add(position);
 
 				item.emit('input:up', { pos, local, touch, viewport });
 			}
 		});
 		const fn_touchmove = touches['@touchmove'].on(touch => {
-			const tpos = viewport.transformFromScreenToViewport(touch.pos.buf());
-			const local = viewport.transformToLocal(touch.pos.buf());
+			const tpos = viewport.transformFromScreenToViewport(touch.pos.new());
+			const local = viewport.transformToLocal(touch.pos.new());
 
 			this['@input:move'].emit({ pos: tpos, local, touch, viewport });
 
 			for(const item of this._items) {
 				const position = item.globalPosition;
-				const pos = tpos.buf().sub(position).rotate(-item.globalRotation).add(position);
+				const pos = tpos.new().sub(position).rotate(-item.globalRotation).add(position);
 
 				item.emit('input:move', { pos, local, touch, viewport });
 			}
 		});
 
 		const fn_touchclick = touches['@touchclick'].on(touch => {
-			const tpos = viewport.transformFromScreenToViewport(touch.pos.buf());
-			const local = viewport.transformToLocal(touch.pos.buf());
+			const tpos = viewport.transformFromScreenToViewport(touch.pos.new());
+			const local = viewport.transformToLocal(touch.pos.new());
 
 			this['@input:click'].emit({ pos: tpos, local, touch, viewport });
 
 			for(const item of this._items) {
 				const position = item.globalPosition;
-				const pos = tpos.buf().sub(position).rotate(-item.globalRotation).add(position);
+				const pos = tpos.new().sub(position).rotate(-item.globalRotation).add(position);
 
 				item.emit('input:click', { pos, local, touch, viewport });
 			}
 		});
 		const fn_touchdblclick = touches['@touchdblclick'].on(touch => {
-			const tpos = viewport.transformFromScreenToViewport(touch.pos.buf());
-			const local = viewport.transformToLocal(touch.pos.buf());
+			const tpos = viewport.transformFromScreenToViewport(touch.pos.new());
+			const local = viewport.transformToLocal(touch.pos.new());
 
 			this['@input:dblclick'].emit({ pos: tpos, local, touch, viewport });
 
 			for(const item of this._items) {
 				const position = item.globalPosition;
-				const pos = tpos.buf().sub(position).rotate(-item.globalRotation).add(position);
+				const pos = tpos.new().sub(position).rotate(-item.globalRotation).add(position);
 
 				item.emit('input:dblclick', { pos, local, touch, viewport });
 			}

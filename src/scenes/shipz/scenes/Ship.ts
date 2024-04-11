@@ -1,5 +1,5 @@
 import { Vector2 } from 'ver/Vector2';
-import { FunctionIsEvent } from 'ver/events';
+import { State } from 'ver/State';
 import { math as Math } from 'ver/helpers';
 import { Animation } from 'ver/Animation';
 import { Loader } from 'ver/Loader';
@@ -13,7 +13,7 @@ import shipz from 'src/water_units.json';
 export const animations = {
 	shoot: function* (ship: Ship, fix_pos: Vector2, diff: number) {
 		const gun = ship.$gun;
-		gun.position.set(fix_pos.buf().moveAngle(diff, gun.rotation - Math.PI));
+		gun.position.set(fix_pos.new().moveAngle(diff, gun.rotation - Math.PI));
 
 		yield 0; while(gun.position.getDistance(fix_pos) > 1) { yield 10;
 			gun.position.moveTime(fix_pos, 10);
@@ -23,22 +23,20 @@ export const animations = {
 		yield 0; while(true) { yield 100;
 			const module = ship.velosity.module;
 
-			ship.$water.alpha = Math.clamped(0.5, module/2, 1);
-			ship.water_blur = Math.clamped(0, 1/(module/10)-2, 10);
+			ship.$water.alpha = Math.clamp(0.5, module/2, 1);
+			ship.water_blur = Math.clamp(0, 1/(module/10)-2, 10);
 		}
 	},
 	running: function* (ship: Ship) {
 		let index: 0 | 1 | 2 | 3 | 4 = 0;
 
-		yield 0; while(ship.current_state === 'running') { yield 500;
+		yield 0; while(ship.state.last === 'running') { yield 500;
 			index = (index + 1) % 5 as 0 | 1 | 2 | 3 | 4;
 			ship.$water.frame = shipz.frames[`water_ripple_small_00${index}.png`].frame;
 		}
 	}
 };
 
-
-type state = 'idle' | 'running';
 
 export class Ship extends Node2D {
 	public static atlas: Image;
@@ -57,19 +55,7 @@ export class Ship extends Node2D {
 	public get $gun() { return this.get('Gun'); }
 
 
-	public prev_state: state = 'idle';
-	public current_state: state = 'idle';
-
-	public state: FunctionIsEvent<null, [next: state, prev: state], (value: state) => unknown> =
-	new FunctionIsEvent(null, value => {
-		if(value === this.prev_state) return;
-
-		this.prev_state = this.current_state;
-		this.current_state = value;
-
-		this.state.emit(this.current_state, this.prev_state);
-	});
-
+	public state = new State<'idle' | 'running'>('idle');
 
 	public velosity = new Vector2();
 	public angular_velosity: number = 0;

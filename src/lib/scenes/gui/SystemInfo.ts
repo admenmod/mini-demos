@@ -38,8 +38,9 @@ export class SystemInfo extends Node2D {
 		this.time += dt;
 	}
 
-	protected _draw({ ctx, size, position }: Viewport): void {
+	protected _draw({ ctx, size, position, pixelRatio }: Viewport): void {
 		ctx.resetTransform();
+		ctx.scale(pixelRatio, pixelRatio);
 
 		const fontSize = 15;
 		ctx.beginPath();
@@ -86,7 +87,7 @@ export class SystemInfo extends Node2D {
 		ctx.fillStyle = '#eeeeee';
 		ctx.fillText(`Screen size: ${size.x.toFixed(0)}, ${size.y.toFixed(0)}`, size.x-10, size.y-10);
 
-		const center = Vector2.ZERO.buf().set(size).div(2);
+		const center = new Vector2().set(size).div(2);
 		const a = 5;
 
 		ctx.beginPath();

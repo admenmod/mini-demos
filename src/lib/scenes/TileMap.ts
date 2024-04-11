@@ -24,7 +24,7 @@ export class TileMap extends Node2D {
 			if(!layer.visible) continue;
 
 			for(let i = 0; i < layer.data.length; i++) {
-				const count = layer.size.buf();
+				const count = layer.size.new();
 
 				const id: number = layer.data[i];
 
@@ -51,12 +51,12 @@ export class TileMap extends Node2D {
 				const tid = id - tileset.firstgid;
 				const tc = new Vector2(tid % tileset.columns, Math.floor(tid / tileset.columns));
 
-				const size = this.size.buf();
+				const size = this.size.new();
 
-				const tileoffset = tc.buf().inc(tileset.tile_size);
-				const tilesize = tileset.tile_size.buf();
-				const drawsize = size.buf();
-				const drawpos = l.buf().inc(size).sub(drawsize.buf().div(2));
+				const tileoffset = tc.new().inc(tileset.tile_size);
+				const tilesize = tileset.tile_size.new();
+				const drawsize = size.new();
+				const drawpos = l.new().inc(size).sub(drawsize.new().div(2));
 
 				ctx.drawImage(
 					tileset.imagedata,

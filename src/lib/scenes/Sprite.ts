@@ -22,7 +22,7 @@ export class Sprite extends Node2D {
 
 	public offset = new Vector2();
 	public offset_angle: number = 0;
-	public size: Vector2 = new Vector2(0, 0, (x, y) => (this.draw_distance = this.globalScale.inc(this.size).module));
+	public size: Vector2 = new Vector2(0, 0, vec => (this.draw_distance = this.globalScale.inc(this.size).module, vec));
 
 	public async load(...args: Parameters<Loader['loadImage']>): Promise<void> {
 		this.image = await Loader.instance().loadImage(...args);

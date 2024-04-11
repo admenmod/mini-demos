@@ -4,63 +4,11 @@ import { math as Math } from 'ver/helpers';
 import { System } from 'ver/System';
 import { Node2D } from './Node2D.js';
 
-
-const deleteFromArray = (arr: any[], o: any) => {
-	const l = arr.indexOf(o);
-	if(!~l) return;
-	return arr.splice(l, 1)[0];
-};
-
-type UID = string;
-const generateUID = (): UID => `${Math.randomInt(0, 1e16)+1}`.padStart(16, '0');
+import { AABB, Shape, ShapeRect, Contact, ContactImpulse, Manifold } from './CollisionShape.js';
+export { ShapeRect } from './CollisionShape.js';
 
 
-interface Contact {
-	a: PhysicsItem;
-	b: PhysicsItem;
-}
-interface Manifold {}
-interface ContactImpulse {}
-
-
-export class ShapeBase {
-	public readonly type = 'ShapeBase' as string;
-	constructor(public offset: Vector2, public bulk: number) {}
-}
-
-export class ShapeCircle extends ShapeBase {
-	public readonly type = 'ShapeCircle';
-	public mass: number;
-
-	constructor(
-		offset: Vector2,
-		bulk: number,
-		public radius: number
-	) {
-		super(offset, bulk);
-
-		this.mass = radius ** 2 * Math.PI;
-	}
-}
-
-export class ShapeRect extends ShapeBase {
-	public readonly type = 'ShapeRect';
-	public mass: number;
-
-	constructor(
-		offset: Vector2,
-		bulk: number,
-		public size: Vector2
-	) {
-		super(offset, bulk);
-
-		this.mass = size.x * size.y;
-	}
-}
-
-
-type Shape = ShapeRect | ShapeCircle;
-
+// NOTE: [reflect] r.inc(restitution).angle = normal.angle*2 - vec1.angle;
 
 export class PhysicsSystem extends System<typeof PhysicsItem> {
 	public '@BeginContact' = new Event<PhysicsSystem, [Contact]>(this);
@@ -70,128 +18,176 @@ export class PhysicsSystem extends System<typeof PhysicsItem> {
 
 	public '@end' = new Event<PhysicsSystem, []>(this);
 
-	public items: PhysicsItem[] = [];
-
-	constructor(public gravity = new Vector2()) {
+	constructor(public gravity = new Vector2(), public D = new Vector2().set(0.95)) {
 		super(PhysicsItem);
 
-		this['@add'].on(item => this.createItem(item));
-		this['@removing'].on(item => this.destroyItem(item));
-
-
-		const PREORITY = -100;
-
-		this['@BeginContact'].on(c => {
-			for(let i = 0; i < this._items.length; i++) this._items[i]['@BeginContact'].emit(c);
-		}, PREORITY);
-		this['@EndContact'].on(c => {
-			for(let i = 0; i < this._items.length; i++) this._items[i]['@EndContact'].emit(c);
-		}, PREORITY);
-		this['@PostSolve'].on((c, ci) => {
-			for(let i = 0; i < this._items.length; i++) this._items[i]['@PostSolve'].emit(c, ci);
-		}, PREORITY);
-		this['@PreSolve'].on((c, m) => {
-			for(let i = 0; i < this._items.length; i++) this._items[i]['@PreSolve'].emit(c, m);
-		}, PREORITY);
+		this['@add'].on(item => {
+			item.world = this;
+			item.emit('Physics:init');
+		});
+		this['@removing'].on(item => {
+			item.emit('Physics:destroy');
+			item.world = null;
+		});
 	}
 
-	public createItem<T extends PhysicsItem>(item: T): T {
-		this.items.push(item);
-		item['@Physics:init'].emit();
-		return item;
-	}
-
-	public destroyItem<T extends PhysicsItem>(item: T): T {
-		const l = this.items.indexOf(item);
-		if(!~l) throw new Error('item not fined');
-
-		item['@Physics:destroy'].emit();
-		this.items.splice(l, 1);
-
-		item['@Physics:destroyed'].emit();
-
-		return item;
-	}
-
-
-	public rect_rect(a: PhysicsItem, b: PhysicsItem): boolean {
+	public dynamic_rect_rect(this: PhysicsSystem, a: PhysicsItem, b: PhysicsItem): boolean {
 		if(a.shape.type !== 'ShapeRect' || b.shape.type !== 'ShapeRect') throw new Error('invalid params');
 
-		const apos = a.position, bpos = b.position;
-		const asize = a.shape.size.buf().inc(a.globalScale), bsize = b.shape.size.buf().inc(b.globalScale);
+		const aAABB = a.getAABB(), bAABB = b.getAABB();
+		const asize = aAABB.size(), bsize = bAABB.size();
+		const apos = a.globalPosition, bpos = b.globalPosition;
+		const avel = a.velosity, bvel = b.velosity;
 
-		if(apos.y > bpos.y - (bsize.y/2 + asize.y/2)) {
-			if(a.type_body === 'dynamic') {
-				apos.y = bpos.y - (bsize.y/2 + asize.y/2);
 
-				const force = new Vector2(1, -1).inc(1, b.restitution);
-				a.velosity.inc(force);
+		if(aAABB.intersect(bAABB)) {
+			const a_vertices = [
+				aAABB.min.new(),
+				new Vector2(aAABB.max.x, aAABB.min.y),
+				aAABB.max.new(),
+				new Vector2(aAABB.min.x, aAABB.max.y)
+			];
+			const b_vertices = [
+				bAABB.min.new(),
+				new Vector2(bAABB.max.x, bAABB.min.y),
+				bAABB.max.new(),
+				new Vector2(bAABB.min.x, bAABB.max.y)
+			];
+
+
+			const isIntersect = (v: Vector2, vertices: Vector2[]) => {
+				if(vertices.length % 2) throw new Error('HACK');
+
+				for(let i = 0, j = i+1; i < vertices.length; i++, j = (j+1) % vertices.length) {
+					const q = vertices[i], p = vertices[j];
+					const edge = p.new().sub(q);
+					const normal = edge.new().normal().normalize();
+
+					// return v;
+				}
+			};
+
+			for(let i = 0; i < b_vertices.length; i++) {
+				isIntersect(b_vertices[i], a_vertices);
 			}
-			if(b.type_body === 'dynamic') {
-				const force = new Vector2(1, -1).inc(1, b.restitution);
-				b.velosity.inc(force);
+
+			const c: Contact = {
+				areaAABB: aAABB.diff(bAABB)
+			};
+
+			this.emit('BeginContact', c);
+			a.emit('BeginContact', c);
+			b.emit('BeginContact', c);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	public rect_rect(this: PhysicsSystem, a: PhysicsItem, b: PhysicsItem): boolean {
+		if(a.shape.type !== 'ShapeRect' || b.shape.type !== 'ShapeRect') throw new Error('invalid params');
+
+		const aAABB = a.getAABB(), bAABB = b.getAABB();
+		const asize = aAABB.size(), bsize = bAABB.size();
+		const apos = a.globalPosition, bpos = b.globalPosition;
+		const avel = a.velosity, bvel = b.velosity;
+
+		if(aAABB.intersect(bAABB)) {
+			const c: Contact = {
+				areaAABB: aAABB.diff(bAABB)
+			};
+
+			const dsize = c.areaAABB.size();
+
+			this.emit('BeginContact', c);
+			a.emit('BeginContact', c);
+			b.emit('BeginContact', c);
+
+
+			if(dsize.x < dsize.y) {
+				if(aAABB.max.x > bAABB.min.x) {
+					if(a.velosity.x > 0) a.velosity.x = 0;
+					a.position.x = bAABB.min.x-asize.x/2;
+				}
+				if(bAABB.max.x > aAABB.min.x) {
+					if(a.velosity.x < 0) a.velosity.x = 0;
+				}
+			} else {
+				// if(aAABB.max.y < bAABB.min.y) a.velosity.y = a.velosity.y < 0 ? a.velosity.y : 0;
+				// if(bAABB.max.y < aAABB.min.y) a.velosity.y = a.velosity.y > 0 ? a.velosity.y : 0;
 			}
+
+
+			// if(Math.abs(bpos.x-apos.x) > Math.abs(bpos.y-apos.y)) {
+			// 	if(apos.x < bpos.x) console.log('r');
+			// 	else console.log('l');
+			// } else {
+			// 	if(apos.y < bpos.y) console.log('d');
+			// 	else console.log('u');
+			// }
+
+			return true;
 		}
 
 		return false;
 	}
 
 	public circle_circle(a: PhysicsItem, b: PhysicsItem): boolean {
-		if(a.shape.type !== 'ShapeCircle' || b.shape.type !== 'ShapeCircle') throw new Error('invalid params');
-
-		let diff = a.position.getDistance(b.position) - (a.shape.radius + b.shape.radius);
-		if(diff < 0) {
-			diff = Math.abs(diff);
-			if(a.shape.mass > b.shape.mass) [a, b] = [b, a];
-			const c = b.shape.mass/a.shape.mass;
-			a.position.moveAngle(diff - diff/c, b.position.getAngleRelative(a.position));
-			b.position.moveAngle(diff/c, a.position.getAngleRelative(b.position));
-
-			return true;
-		}
+		// if(a.shape.type !== 'ShapeCircle' || b.shape.type !== 'ShapeCircle') throw new Error('invalid params');
+		//
+		// let diff = a.position.getDistance(b.position) - (a.shape.radius + b.shape.radius);
+		// if(diff < 0) {
+		// 	diff = Math.abs(diff);
+		// 	if(a.shape.mass > b.shape.mass) [a, b] = [b, a];
+		// 	const c = b.shape.mass/a.shape.mass;
+		// 	a.position.moveAngle(diff - diff/c, b.position.getAngleRelative(a.position));
+		// 	b.position.moveAngle(diff/c, a.position.getAngleRelative(b.position));
+		//
+		// 	return true;
+		// }
 
 		return false;
 	}
 
 	public circle_rect(a: PhysicsItem, b: PhysicsItem): boolean {
-		if(a.shape.type !== 'ShapeCircle' || b.shape.type !== 'ShapeRect') throw new Error('invalid params');
-
-		const p = new Vector2(
-			Math.max(b.position.x-b.shape.size.x/2, Math.min(a.position.x, b.position.x+b.shape.size.x/2)),
-			Math.max(b.position.y-b.shape.size.y/2, Math.min(a.position.y, b.position.y+b.shape.size.y/2))
-		);
-
-		if(a.position.getDistance(p) < a.shape.radius) {
-			if(Math.abs(b.position.x-a.position.x) > Math.abs(b.position.y-a.position.y)) {
-				if(a.position.x < b.position.x) a.position.x += (b.position.x - b.shape.size.x/2) - (a.position.x+a.shape.radius);
-				else a.position.x += (b.position.x + b.shape.size.x/2) - (a.position.x-a.shape.radius);
-			} else {
-				if(a.position.y < b.position.y) a.position.y += (b.position.y - b.shape.size.y/2) - (a.position.y+a.shape.radius);
-				else a.position.y += (b.position.y + b.shape.size.y/2) - (a.position.y-a.shape.radius);
-			}
-
-			return true;
-		}
+		// if(a.shape.type !== 'ShapeCircle' || b.shape.type !== 'ShapeRect') throw new Error('invalid params');
+		//
+		// const p = new Vector2(
+		// 	Math.max(b.position.x-b.shape.size.x/2, Math.min(a.position.x, b.position.x+b.shape.size.x/2)),
+		// 	Math.max(b.position.y-b.shape.size.y/2, Math.min(a.position.y, b.position.y+b.shape.size.y/2))
+		// );
+		//
+		// if(a.position.getDistance(p) < a.shape.radius) {
+		// 	if(Math.abs(b.position.x-a.position.x) > Math.abs(b.position.y-a.position.y)) {
+		// 		if(a.position.x < b.position.x) a.position.x += (b.position.x - b.shape.size.x/2) - (a.position.x+a.shape.radius);
+		// 		else a.position.x += (b.position.x + b.shape.size.x/2) - (a.position.x-a.shape.radius);
+		// 	} else {
+		// 		if(a.position.y < b.position.y) a.position.y += (b.position.y - b.shape.size.y/2) - (a.position.y+a.shape.radius);
+		// 		else a.position.y += (b.position.y + b.shape.size.y/2) - (a.position.y-a.shape.radius);
+		// 	}
+		//
+		// 	return true;
+		// }
 
 		return false;
 	}
 
 
 	public step(dt: number): void {
-		for(let i = 0; i < this.items.length; i++) {
-			const item = this.items[i];
+		for(let i = 0; i < this._items.length; i++) {
+			const item = this._items[i];
 
 			if(item.type_body === 'dynamic') {
 				item.velosity.add(this.gravity);
-				item.velosity.inc(0.95);
-				item.position.add(item.velosity);
+				item.velosity.inc(this.D);
 			}
 		}
 
-		for(let i = 0; i < this.items.length; i++) {
-			const a = this.items[i];
-			for(let j = i+1; j < this.items.length; j++) {
-				const b = this.items[j];
+		for(let i = 0; i < this._items.length; i++) {
+			const a = this._items[i];
+			for(let j = i+1; j < this._items.length; j++) {
+				const b = this._items[j];
 
 				if(a.shape.type === 'ShapeRect' && b.shape.type === 'ShapeRect') {
 					this.rect_rect(a, b);
@@ -202,6 +198,14 @@ export class PhysicsSystem extends System<typeof PhysicsItem> {
 				} else if(a.shape.type === 'ShapeRect' && b.shape.type === 'ShapeCircle') {
 					this.circle_rect(b, a);
 				}
+			}
+		}
+
+		for(let i = 0; i < this._items.length; i++) {
+			const item = this._items[i];
+
+			if(item.type_body === 'dynamic') {
+				item.position.add(item.velosity);
 			}
 		}
 	}
@@ -216,7 +220,7 @@ export class PhysicsSystem extends System<typeof PhysicsItem> {
 }
 
 
-const PARENT_CACHE = Symbol('PARENT_CACHE');
+export const PARENT_CACHE = Symbol('PARENT_CACHE');
 
 export class PhysicsItem extends Node2D {
 	protected [PARENT_CACHE]: PhysicsItem[] = [];
@@ -231,15 +235,18 @@ export class PhysicsItem extends Node2D {
 	public '@PreSolve' = new Event<PhysicsItem, [Contact, Manifold]>(this);
 
 
+	public world: PhysicsSystem | null = null;
+
 	public velosity = new Vector2();
-	public rotation_velocity: number = 0;
+	public angular_velocity: number = 0;
 
 	public density = 1;
 	public friction = 0.2;
 	public restitution = 0.2;
 
-	public shape!: Shape;
 	public type_body: 'dynamic' | 'static' = 'static';
+	public shape!: Shape;
+	public aabb = new AABB();
 
 	constructor() {
 		super();
@@ -260,6 +267,27 @@ export class PhysicsItem extends Node2D {
 		this.friction = 0.2;
 		this.restitution = 0.2;
 
-		this.shape = this.shape || new ShapeRect(new Vector2(), 1, new Vector2(1, 1));
+		this.shape = this.shape || new ShapeRect(new Vector2(1, 1));
+		this.getAABB();
+	}
+
+	public computeMass(): number {
+		if(this.shape.type === 'ShapeRect') return this.shape.size.x * this.shape.size.y * this.density;
+		if(this.shape.type === 'ShapeCircle') return this.shape.radius ** 2 * Math.PI * this.density;
+		throw new Error('unknown shape');
+	}
+
+	public getAABB(): AABB {
+		const pos = this.globalPosition;
+		const size = new Vector2();
+
+		if(this.shape.type === 'ShapeRect') size.set(this.shape.size).inc(this.globalScale);
+		else if(this.shape.type === 'ShapeCircle') size.set(this.shape.radius*2).inc(this.globalScale);
+		else throw new Error('unknown shape');
+
+		this.aabb.min.set(size.new().div(2).invert().add(pos));
+		this.aabb.max.set(size.new().div(2).add(pos));
+
+		return this.aabb;
 	}
 }
