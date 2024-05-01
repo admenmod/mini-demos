@@ -9,12 +9,7 @@ import { c } from 'src/animations.js';
 export const main_anim = new Animation(main);
 
 
-const draws: ((viewport: Viewport) => unknown)[] = [];
-
-main_anim.on('tick', () => {
-	viewport.clear();
-	for(const draw of draws) draw(viewport);
-});
+export const draws: ((viewport: Viewport) => unknown)[] = [];
 
 
 const Rect = (pos: Vector2, size: Vector2, color: string) => {
@@ -77,11 +72,12 @@ export function* main() {
 	const cc = (c: number) => Math.sin(c/2 * Math.PI) **4;
 
 	const rect = Rect(vec2(100, 0), vec2(100, 100), '#aa7777');
-	const text = Text('box', rect.pos.new(), '#eeeeee');
+	const text = Text('box', rect.pos.ref().accessors({
+		get: (n, i) => n + rect.size[i] / 2,
+		set: (n, i) => n - rect.size[i] / 2
+	}), '#eeeeee');
 
-	yield 0;
-
-	while(true) {
+	yield 0; while(true) {
 		const d = viewport.size.new().sub(rect.size);
 
 		yield* c(c => {

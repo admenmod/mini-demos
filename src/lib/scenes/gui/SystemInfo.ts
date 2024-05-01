@@ -14,7 +14,7 @@ export class SystemInfo extends Node2D {
 
 	public stats: Record<string, string> = {};
 
-	protected async _init(): Promise<void> {
+	protected override async _init(): Promise<void> {
 		this.zIndex = 1000;
 
 		this.positionAsRelative = false;
@@ -24,7 +24,7 @@ export class SystemInfo extends Node2D {
 		this.draw_distance = Math.INF;
 	}
 
-	protected _process(dt: number) {
+	protected override _process(dt: number) {
 		if(this.time > 500) {
 			this.textFPS = `FPS: ${(this.fpsacc/this.fpsi).toFixed(2)}`;
 
@@ -38,7 +38,7 @@ export class SystemInfo extends Node2D {
 		this.time += dt;
 	}
 
-	protected _draw({ ctx, size, position, pixelRatio }: Viewport): void {
+	protected override _draw({ ctx, size, position, pixelRatio }: Viewport): void {
 		ctx.resetTransform();
 		ctx.scale(pixelRatio, pixelRatio);
 

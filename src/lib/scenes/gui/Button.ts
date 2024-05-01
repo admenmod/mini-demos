@@ -7,6 +7,7 @@ import { Control } from '../Control.js';
 export class Button extends Control {
 	public '@click' = new Event<Button, []>(this);
 	public '@pressed' = new Event<Button, []>(this);
+	public '@up' = new Event<Button, []>(this);
 
 
 	protected _text: string = '';
@@ -18,7 +19,7 @@ export class Button extends Control {
 
 	public style: Partial<CSSStyleRule['style']> = {};
 
-	protected async _init(this: Button): Promise<void> {
+	protected override async _init(this: Button): Promise<void> {
 		await super._init();
 
 		this.on('input:click', ({ pos, touch }) => {
@@ -42,9 +43,19 @@ export class Button extends Control {
 				pos.y < position.y + size.y/2 && pos.y > position.y - size.y/2
 			) this['@pressed'].emit();
 		});
+
+		this.on('input:up', ({ pos }) => {
+			const position = this.globalPosition;
+			const size = this.globalScale.inc(this.size);
+
+			if(
+				pos.x < position.x + size.x/2 && pos.x > position.x - size.x/2 &&
+				pos.y < position.y + size.y/2 && pos.y > position.y - size.y/2
+			) this['@up'].emit();
+		});
 	}
 
-	protected _draw({ ctx }: Viewport): void {
+	protected override _draw({ ctx }: Viewport): void {
 		ctx.beginPath();
 		ctx.fillStyle = this.style.background || '#222222';
 		ctx.fillRect(-this.size.x/2, -this.size.y/2, this.size.x, this.size.y);

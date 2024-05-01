@@ -21,10 +21,10 @@ import { audioContorller } from '../state.js';
 
 class Info extends Node2D {
 	public self!: MainScene;
-	protected async _init(): Promise<void> { this.draw_distance = Math.INF; }
-	protected _ready(): void { this.zIndex = 10000; }
+	protected override async _init(): Promise<void> { this.draw_distance = Math.INF; }
+	protected override _ready(): void { this.zIndex = 10000; }
 
-	protected _draw({ ctx }: Viewport): void {
+	protected override _draw({ ctx }: Viewport): void {
 		const center = Vector2.ZERO;
 		const a = 30;
 
@@ -41,20 +41,20 @@ class Info extends Node2D {
 
 
 export class MainScene extends Control {
-	protected static async _load(scene: typeof this): Promise<void> {
-		await Promise.all([
-			Sprite.load(),
-			super._load(scene)
-		]);
+	protected static override async _load(scene: typeof this): Promise<void> {
+		await Sprite.load();
+		await super._load(scene);
 	}
 
-	public TREE() { return {
+	public override TREE() { return {
 		Camera2D,
 		GridMap,
 		SystemInfo,
 		Info,
 		Joystick,
 		bPlatform: Platform,
+		lPlatform: Platform,
+		rPlatform: Platform,
 		Cat,
 	}}
 	// aliases
@@ -66,18 +66,20 @@ export class MainScene extends Control {
 
 	public sensor_camera = new SensorCamera();
 
-	protected async _init(this: MainScene): Promise<void> {
+	protected override async _init(this: MainScene): Promise<void> {
 		await super._init();
 
+		physicsSystem.D.set(0.9);
 		physicsSystem.gravity.set(0, 1);
 
 		this.$camera.viewport = viewport;
 		this.$camera.current = true;
 		this.$camera.on('PreProcess', dt => {
 			this.$camera.position.moveTime(this.$cat.position.new()
-				.sub(0, this.$camera.size.y/2)
-				.add(0, this.$cat.size.y/2 * this.$cat.scale.y)
-				.add(0, 50), 100, 5);
+				// .sub(0, this.$camera.size.y/2)
+				// .add(0, this.$cat.size.y/2 * this.$cat.scale.y)
+				// .add(0, 50)
+				, 10);
 
 			// this.sensor_camera.update(dt, touches, this.$camera);
 
@@ -93,10 +95,19 @@ export class MainScene extends Control {
 
 
 		this.get('bPlatform').size.set(1000, 20);
+		this.get('lPlatform').size.set(20, 200);
+		this.get('rPlatform').size.set(20, 200);
+
+		this.get('bPlatform').position.set(0, 0);
+		this.get('lPlatform').position.set(-500, -100);
+		this.get('rPlatform').position.set(500, -100);
+
 
 		const cat = this.$cat;
-		cat.position.add(0, -100);
+		cat.position.add(0, -300);
 
+
+		this.$joystick.speed_reset = 1;
 
 		// this.on('input:press', () => {
 		// 	current_anim = 'running';
@@ -119,24 +130,24 @@ export class MainScene extends Control {
 		}).call(viewport, viewport.size);
 	}
 
-	protected _ready(this: MainScene): void {
+	protected override _ready(this: MainScene): void {
 		this.processPriority = 1000;
 
 		this.$camera.addChild(this.removeChild(this.$joystick.name, true));
 	}
 
-	protected _process(this: MainScene, dt: number): void {
+	protected override _process(this: MainScene, dt: number): void {
 		const cat = this.$cat;
 		const joystick = this.$joystick;
 
 
 		let touch = touches.findTouch();
 		if(touch && touch.pos.x > viewport.size.x/2) {
-			cat.velosity.y -= 20;
+			cat.velocity.y -= 20;
 		}
 
 
-		let speed = 0.5;
+		let speed = 1;
 
 		if(!joystick.value) cat.state('idle');
 		else {
@@ -144,7 +155,7 @@ export class MainScene extends Control {
 			const dir = Math.sign(Math.cos(joystick.angle));
 			if(dir > 0) cat.$sprite.invertX = true;
 			if(dir < 0) cat.$sprite.invertX = false;
-			cat.velosity.add(dt/16 * speed * joystick.value * dir, 0);
+			cat.velocity.add(dt/16 * speed * joystick.value * dir, 0);
 		}
 	}
 }

@@ -13,11 +13,11 @@ import * as Input_code from './scenes/input_code/index.js';
 
 
 export const $is_fullscreen = atom(false);
-setInterval(() => $is_fullscreen.set(Boolean(document.fullscreenElement)), 3000);
+window.addEventListener('resize', () => $is_fullscreen.set(Boolean(document.fullscreenElement)));
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 //@ts-ignore
-app.ondblclick = e => (e.currentTarget as HTMLDivElement).webkitRequestFullscreen();
+window.ondblclick = e => app.webkitRequestFullscreen();
 
 
 export type scene_name = keyof typeof scenes;

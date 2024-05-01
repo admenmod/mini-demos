@@ -7,6 +7,8 @@ import { Control } from '../Control.js';
 
 
 export class Joystick extends Control {
+	public speed_reset: number = 3;
+
 	public core_offset = new Vector2();
 
 	public radius0: number = 70;
@@ -28,7 +30,7 @@ export class Joystick extends Control {
 	}
 
 
-	protected async _init(this: Joystick): Promise<void> {
+	protected override async _init(this: Joystick): Promise<void> {
 		this.on('input:press', ({ pos: tpos, touch }) => {
 			const pos = this.globalPosition;
 			const l = pos.getDistance(tpos) / this.globalScale.x;
@@ -60,11 +62,11 @@ export class Joystick extends Control {
 		});
 	}
 
-	protected _process(): void {
-		if(!this.touch) this.core_offset.moveTime(Vector2.ZERO, 3);
+	protected override _process(): void {
+		if(!this.touch) this.core_offset.moveTime(Vector2.ZERO, this.speed_reset);
 	}
 
-	protected _draw(viewport: Viewport): void {
+	protected override _draw(viewport: Viewport): void {
 		const ctx = viewport.ctx;
 
 		ctx.globalAlpha = 0.7;

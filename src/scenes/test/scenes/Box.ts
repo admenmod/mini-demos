@@ -18,13 +18,13 @@ export class Box extends PhysicsItem {
 		this.shape.size.set(vec);
 	});
 
-	protected async _init(this: Box): Promise<void> {
+	protected override async _init(this: Box): Promise<void> {
 		this.type_body = 'dynamic';
 		this.shape = new ShapeRect(new Vector2(0, 0));
 		this.size.set(200, 100);
 	}
 
-	protected _draw(viewport: Viewport): void {
+	protected override _draw(viewport: Viewport): void {
 		const { ctx } = viewport;
 
 		ctx.globalAlpha = 1;

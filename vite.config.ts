@@ -1,7 +1,7 @@
 import os from 'node:os';
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import preact from '@preact/preset-vite'
+import preact from '@preact/preset-vite';
 
 
 const port = 3000;
@@ -19,8 +19,7 @@ const host = (() => {
 
 
 export default defineConfig({
-	plugins: [tsconfigPaths(), preact()],
-	server: {
-		host, port
-	}
+	server: { host, port },
+
+	plugins: [tsconfigPaths(), preact()]
 });

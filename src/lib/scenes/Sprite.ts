@@ -43,7 +43,7 @@ export class Sprite extends Node2D {
 	public invertX: boolean = false;
 	public invertY: boolean = false;
 
-	protected _draw({ ctx }: Viewport): void {
+	protected override _draw({ ctx }: Viewport): void {
 		if(!this.image) return;
 
 		if(this.invertX) ctx.scale(-1, 1);

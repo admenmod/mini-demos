@@ -1,26 +1,44 @@
 import { NAME } from './index.js';
-import { map } from 'nanostores';
+import { atom } from 'nanostores';
 
-import { Vector2 } from 'ver/Vector2';
 import { EventAsFunction, FunctionIsEvent } from 'ver/events';
 import type { Viewport } from 'ver/Viewport';
 
+import { Value } from 'engine/Value.js';
 import { AudioContorller } from 'engine/AudioController.js';
 import { canvas, mainloop, touches, viewport } from 'src/canvas.js';
+import { CodeEditor } from 'engine/CodeEditor.js';
 
 
-export const $screen = map(new Vector2());
+export interface IInput {
+	name: Value<string>;
+	value: Value<string>;
+	dep: Value<string>[];
+}
 
-viewport.on('resize', size => {
-	$screen.setKey(0, size[0]);
-	$screen.setKey(1, size[1]);
-}).call(viewport, viewport.size);
+type priValues<T extends Record<string, any>> = { [K in keyof T]: T[K] extends Value<infer R, any> ? R : T[K]; };
 
+export const $inputs = atom<IInput[]>([]);
+
+export const $addInput: FunctionIsEvent<null, [input: IInput], (input: priValues<IInput>) => void> =
+new FunctionIsEvent(null, input => {
+	const new_input: IInput = {
+		name: new Value(input.name),
+		value: new Value(input.value),
+		dep: input.dep
+	};
+	$inputs.set([...$inputs.get(), new_input]);
+	$addInput.emit(new_input);
+});
+
+
+export const editor = new CodeEditor();
+
+
+export const audioContorller = new AudioContorller();
 
 export const process = new EventAsFunction<null, [dt: number]>(null);
 export const render = new EventAsFunction<null, [viewport: Viewport]>(null);
-
-export const audioContorller = new AudioContorller();
 
 export const init: FunctionIsEvent<null, [], () => Promise<void>> = new FunctionIsEvent(null, async () => {
 	await init.await();

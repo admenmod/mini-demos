@@ -1,17 +1,50 @@
-import { Vector2 } from 'ver/Vector2';
-import { Event, EventDispatcher } from 'ver/events';
-import { math as Math, delay } from 'ver/helpers';
+import { EventDispatcher } from 'ver/events';
 import { Animation } from 'ver/Animation';
+
+import { Node } from 'engine/scenes/Node.js';
+import { ProcessSystem } from 'engine/scenes/Node.js';
+import { RenderSystem } from 'engine/scenes/CanvasItem.js';
+import { ControllersSystem } from 'engine/scenes/Control.js';
+import { PhysicsSystem } from 'engine/scenes/PhysicsItem.js';
 
 import { touches, viewport } from 'src/canvas.js';
 import { init, process, render } from './state.js';
 
-import { main_anim } from './animations/index.js';
+import { MainScene } from './scenes/MainScene.js';
 
 
-init.on(() => void main_anim.run());
+export const processSystem = new ProcessSystem();
+export const renderSystem = new RenderSystem();
+export const controllersSystem = new ControllersSystem(touches, viewport);
+export const physicsSystem = new PhysicsSystem();
 
-process.on(dt => main_anim.tick(dt));
+process.on(dt => {
+	controllersSystem.update(dt);
+	processSystem.update(dt);
+	physicsSystem.update(dt);
+});
+
+render.on(viewport => {
+	renderSystem.update(viewport);
+});
+
+
+init.on(async () => {
+	await Node.load();
+	const root_node = new Node();
+	await root_node.init();
+
+	processSystem.addRoot(root_node);
+	renderSystem.addRoot(root_node);
+	controllersSystem.addRoot(root_node);
+	physicsSystem.addRoot(root_node);
+
+	await MainScene.load();
+	const main_scene = new MainScene();
+	await main_scene.init();
+
+	root_node.addChild(main_scene);
+});
 
 
 export const anims = new class extends EventDispatcher {

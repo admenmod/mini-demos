@@ -40,12 +40,12 @@ export const animations = {
 
 export class Ship extends Node2D {
 	public static atlas: Image;
-	protected static async _load(scene: typeof this): Promise<void> {
+	protected static override async _load(scene: typeof this): Promise<void> {
 		await super._load(scene);
 		this.atlas = await Loader.instance().loadImage(`assets/shipz/${shipz.meta.image}`);
 	}
 
-	public TREE() { return {
+	public override TREE() { return {
 		Water: Sprite,
 		Body: Sprite,
 		Gun: Sprite
@@ -66,7 +66,7 @@ export class Ship extends Node2D {
 
 	public water_blur = 0;
 
-	protected async _init(this: Ship): Promise<void> {
+	protected override async _init(this: Ship): Promise<void> {
 		this.$water.image = Ship.atlas;
 		this.$water.frame = shipz.frames['water_ripple_small_000.png'].frame;
 
@@ -96,7 +96,7 @@ export class Ship extends Node2D {
 		this.shoot_anim.reset().run(this, new Vector2(0, 0), 5);
 	}
 
-	protected _process(dt: number): void {
+	protected override _process(dt: number): void {
 		this.shoot_anim.tick(dt);
 		this.water_anim.tick(dt * this.velosity.module);
 		this.water_opasity_anim.tick(dt);

@@ -23,9 +23,7 @@ process.on(dt => {
 	processSystem.update(dt);
 });
 
-render.on(viewport => {
-	renderSystem.update(viewport);
-});
+render.on(viewport => renderSystem.update(viewport));
 
 
 init.on(async () => {
@@ -62,6 +60,9 @@ export const anims = new class extends EventDispatcher {
 		if(!~l) return;
 		this.anims.splice(l, 1);
 	}
+	public update(dt: number): void {
+		for(const anim of anims.anims) anim.tick(dt);
+	}
 }
 
-process.on(dt => { for(const anim of anims.anims) anim.tick(dt); }, -1000);
+process.on(dt => anims.update(dt), -1000);

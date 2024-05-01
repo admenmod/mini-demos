@@ -43,7 +43,7 @@ export class ShapeBase {
 }
 
 export class ShapeCircle extends ShapeBase {
-	public readonly type = 'ShapeCircle';
+	public override readonly type = 'ShapeCircle';
 
 	constructor(public radius: number) {
 		super();
@@ -51,7 +51,7 @@ export class ShapeCircle extends ShapeBase {
 }
 
 export class ShapeRect extends ShapeBase {
-	public readonly type = 'ShapeRect';
+	public override readonly type = 'ShapeRect';
 
 	constructor(public size: Vector2) {
 		super();
@@ -247,7 +247,7 @@ export class CollisionShape extends Node2D {
 
 	public shape!: Shape;
 
-	protected async _init(): Promise<void> {
+	protected override async _init(): Promise<void> {
 		this.shape = this.shape || new ShapeRect(new Vector2(1, 1));
 
 		this.getAABB();

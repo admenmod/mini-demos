@@ -117,7 +117,7 @@ export class Node2D extends CanvasItem {
 
 	protected _draw(viewport: Viewport): void {}
 
-	protected _render(viewport: Viewport): void {
+	protected override _render(viewport: Viewport): void {
 		const pos = this.globalPosition;
 
 		if(!viewport.isInViewport(pos, this.draw_distance)) return;

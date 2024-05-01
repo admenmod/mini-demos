@@ -30,7 +30,7 @@ export class TextNode extends Node2D {
 	protected linespace: number = 15;
 
 
-	protected _draw({ ctx }: Viewport): void {
+	protected override _draw({ ctx }: Viewport): void {
 		ctx.beginPath();
 		ctx.font = this.style.font;
 		ctx.fillStyle = this.style.color;

@@ -1,6 +1,5 @@
 import { Vector2 } from 'ver/Vector2';
 import { Event } from 'ver/events';
-import { math as Math } from 'ver/helpers';
 import { System } from 'ver/System';
 import type { Viewport } from 'ver/Viewport';
 import type { Touch, TouchesController } from 'ver/TouchesController';

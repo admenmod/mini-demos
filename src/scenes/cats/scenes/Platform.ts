@@ -14,7 +14,7 @@ export class Platform extends PhysicsItem {
 		this.shape = new ShapeRect(new Vector2(1, 1));
 	}
 
-	protected _draw({ ctx }: Viewport): void {
+	protected override _draw({ ctx }: Viewport): void {
 		const size = this.size;
 
 		ctx.fillStyle = '#337733';

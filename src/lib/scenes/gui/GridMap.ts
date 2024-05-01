@@ -16,8 +16,8 @@ export class GridMap extends Node2D {
 	});
 
 	public size = new Vector2(0, 0, vec => this.draw_distance = vec.module);
-	public scale = new Vector2(1, 1);
 	public offset = new Vector2();
+	public override scale = new Vector2(1, 1);
 
 	public padding = new Vector2(5, 5);
 
@@ -35,7 +35,7 @@ export class GridMap extends Node2D {
 		this.size.set(350, 200);
 	}
 
-	protected _draw({ ctx, scale }: Viewport): void {
+	protected override _draw({ ctx, scale }: Viewport): void {
 		const size = this.size.new();
 		const zero = size.new().div(2).invert().add(this.offset);
 		const tile = this.tile.new().inc(this.tile_scale);

@@ -1,9 +1,11 @@
 import { Vector2 } from 'ver/Vector2';
 import { State } from 'ver/State';
-import { math as Math } from 'ver/helpers';
+import { math as Math, delay } from 'ver/helpers';
 import { codeShell } from 'ver/codeShell';
 import { Animation } from 'ver/Animation';
 import type { Viewport } from 'ver/Viewport';
+
+import { Value } from 'engine/Value.js';
 
 import { SensorCamera } from 'engine/SensorCamera.js';
 import { GridMap } from 'engine/scenes/gui/GridMap.js';
@@ -12,17 +14,18 @@ import { Node2D } from 'engine/scenes/Node2D.js';
 import { Camera2D } from 'engine/scenes/Camera2D.js';
 import { SystemInfo } from 'engine/scenes/gui/SystemInfo.js';
 import { Sprite } from 'engine/scenes/Sprite.js';
+import { CodeEditorView } from './CodeEditorView.js';
 
 import { touches, viewport } from 'src/canvas.js';
-import { audioContorller } from '../state.js';
+import { audioContorller, editor } from '../state.js';
 import { c } from 'src/animations.js';
 
 
 class Info extends Node2D {
-	protected async _init(): Promise<void> { this.draw_distance = Math.INF; }
-	protected _ready(): void { this.zIndex = 10000; }
+	protected override async _init(): Promise<void> { this.draw_distance = Math.INF; }
+	protected override _ready(): void { this.zIndex = 10000; }
 
-	protected _draw({ ctx }: Viewport): void {
+	protected override _draw({ ctx }: Viewport): void {
 		const center = Vector2.ZERO;
 		const a = 30;
 
@@ -48,6 +51,8 @@ class AlertText extends Node2D {
 	public fontFamily: string = 'arkhip';
 	public padding = new Vector2(30, 15);
 
+	protected _exit: boolean = false;
+
 	public state = new State(false);
 
 	public opasity_anim = new Animation(function* (o: AlertText, time = 1000, gap = 1000) {
@@ -55,11 +60,16 @@ class AlertText extends Node2D {
 
 		let f = true;
 
-		yield 0; while(true) {
+		yield gap; while(true) {
 			if(f) {
 				yield* c(c => {
 					o.alpha = 1-c;
 				}, time/2, 20, m);
+
+				if(o._exit) {
+					o._exit = false;
+					break;
+				}
 			} else {
 				yield* c(c => {
 					o.alpha = c;
@@ -72,26 +82,31 @@ class AlertText extends Node2D {
 		}
 	});
 
-	protected async _init(): Promise<void> {
+	public async show(text: string, time: number): Promise<void> {
+		if(this.state(true)) {
+			this.text = text;
+			await delay(time, () => this._exit = true);
+		}
+	}
+	public async hide(): Promise<void> { this.state(false); }
+
+	protected override async _init(): Promise<void> {
 		this.zIndex = 100;
 
 		this.visible = false;
 
 		this.opasity_anim.on('run', () => this.visible = true);
+		this.opasity_anim.on('end', () => this.state(false));
 		this.opasity_anim.on('reset', () => this.visible = false);
 
-		this.state.on((value, p) => {
-			console.log(value === p);
-			if(value) this.opasity_anim.run(this);
-			else this.opasity_anim.reset();
-		});
+		this.state.on(value => value ? this.opasity_anim.run(this) : this.opasity_anim.reset());
 	}
 
-	protected _process(dt: number): void {
+	protected override _process(dt: number): void {
 		this.opasity_anim.tick(dt);
 	}
 
-	protected _draw(viewport: Viewport): void {
+	protected override _draw(viewport: Viewport): void {
 		const { ctx, size } = viewport;
 
 		ctx.save();
@@ -124,19 +139,20 @@ class AlertText extends Node2D {
 
 
 export class MainScene extends Control {
-	protected static async _load(scene: typeof this): Promise<void> {
+	protected static override async _load(scene: typeof this): Promise<void> {
 		await super._load(scene);
 		await Sprite.load();
 
 		await audioContorller.load('click', 'assets/audio/play.wav');
 	}
 
-	public TREE() { return {
+	public override TREE() { return {
 		Camera2D,
 		GridMap,
 		SystemInfo,
 		Info,
-		AlertText
+		AlertText,
+		CodeEditorView
 	}}
 	// aliases
 	public get $camera() { return this.get('Camera2D'); }
@@ -146,10 +162,11 @@ export class MainScene extends Control {
 
 	public sensor_camera = new SensorCamera();
 
-	protected async _init(this: MainScene): Promise<void> {
+	protected override async _init(this: MainScene): Promise<void> {
+		this.get('CodeEditorView').editor = editor;
+
 		await super._init();
 
-		this.processPriority = 1000;
 
 		this.$camera.current = true;
 		this.$camera.viewport = viewport;
@@ -171,15 +188,24 @@ export class MainScene extends Control {
 		}).call(viewport, viewport.size);
 	}
 
-	protected _ready(this: MainScene): void {  }
+	protected override _ready(this: MainScene): void {
+		editor.setText(
+`let a = 9;
+const wjj = 'dkk';`
+		);
+		this.on('input:click', () => {
+			editor.focus();
+		});
+	}
 
-	protected _process(this: MainScene, dt: number): void {
+	protected override _process(this: MainScene, dt: number): void {
 		let touch = touches.findTouch(t => t.isdblClick());
 		if(touch) {
 			const pos = viewport.transformFromScreenToViewport(touch.pos.new());
 
-			this.$alert.text = 'Alert';
-			this.$alert.state(true);
+			const text = `Alert`;
+
+			this.$alert.show(text, 3000);
 		}
 	}
 }

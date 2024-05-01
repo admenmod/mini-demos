@@ -20,10 +20,10 @@ import { audioContorller } from '../state.js';
 
 class Info extends Node2D {
 	public self!: MainScene;
-	protected async _init(): Promise<void> { this.draw_distance = Math.INF; }
-	protected _ready(): void { this.zIndex = 10000; }
+	protected override async _init(): Promise<void> { this.draw_distance = Math.INF; }
+	protected override _ready(): void { this.zIndex = 10000; }
 
-	protected _draw({ ctx, size }: Viewport): void {
+	protected override _draw({ ctx, size }: Viewport): void {
 		const center = Vector2.ZERO;
 		const a = 30;
 
@@ -53,7 +53,7 @@ const moveTime_anim = new Animation(function* (target: Vector2, value: Vector2) 
 });
 
 export class MainScene extends Control {
-	protected static async _load(scene: typeof this): Promise<void> {
+	protected static override async _load(scene: typeof this): Promise<void> {
 		await Promise.all([
 			Sprite.load(),
 			Enemy.load(),
@@ -61,7 +61,7 @@ export class MainScene extends Control {
 		]);
 	}
 
-	public TREE() { return {
+	public override TREE() { return {
 		Camera2D,
 		GridMap,
 		SystemInfo,
@@ -93,7 +93,7 @@ export class MainScene extends Control {
 
 	public enemys: Enemy[] = [];
 
-	protected async _init(this: MainScene): Promise<void> {
+	protected override async _init(this: MainScene): Promise<void> {
 		await super._init();
 
 		this.$camera.viewport = viewport;
@@ -142,7 +142,7 @@ export class MainScene extends Control {
 		}).call(viewport, viewport.size);
 	}
 
-	protected _ready(this: MainScene): void {
+	protected override _ready(this: MainScene): void {
 		this.processPriority = 1000;
 
 		// this.$camera.addChild(this.removeChild(this.$joystick.name, true));
@@ -150,7 +150,7 @@ export class MainScene extends Control {
 		this.spawn_anim.run(this);
 	}
 
-	protected _process(this: MainScene, dt: number): void {
+	protected override _process(this: MainScene, dt: number): void {
 		moveTime_anim.tick(dt);
 		this.spawn_anim.tick(dt);
 

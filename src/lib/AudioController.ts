@@ -2,6 +2,9 @@ import { Event, EventDispatcher } from 'ver/events';
 
 
 export class AudioContorller extends EventDispatcher {
+	public '@play' = new Event<AudioContorller, []>(this);
+
+
 	public ctx = new AudioContext();
 	public gain = this.ctx.createGain();
 
@@ -26,5 +29,7 @@ export class AudioContorller extends EventDispatcher {
 		sound.connect(this.gain);
 
 		sound.start(this.ctx.currentTime);
+
+		this['@play'].emit();
 	}
 }

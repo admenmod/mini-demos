@@ -12,7 +12,7 @@ export class TileMap extends Node2D {
 	public map: MapParser.Map | null = null;
 
 
-	protected _draw({ ctx }: Viewport): void {
+	protected override _draw({ ctx }: Viewport): void {
 		if(!this.map) return;
 
 		const map = this.map;

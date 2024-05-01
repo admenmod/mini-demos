@@ -19,13 +19,13 @@ export class Camera2D extends Node2D {
 	}
 
 
-	protected _ready(): void {
+	protected override _ready(): void {
 		this.zIndex = 10000;
 		this.processPriority = 10000;
 	}
 
 
-	protected _process(dt: number): void {
+	protected override _process(dt: number): void {
 		if(this.viewport && this.current) {
 			this.viewport.position.set(this.globalPosition);
 			this.viewport.scale.set(this.globalScale);

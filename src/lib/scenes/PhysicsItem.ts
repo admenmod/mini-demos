@@ -37,7 +37,7 @@ export class PhysicsSystem extends System<typeof PhysicsItem> {
 		const aAABB = a.getAABB(), bAABB = b.getAABB();
 		const asize = aAABB.size(), bsize = bAABB.size();
 		const apos = a.globalPosition, bpos = b.globalPosition;
-		const avel = a.velosity, bvel = b.velosity;
+		const avel = a.velocity, bvel = b.velocity;
 
 
 		if(aAABB.intersect(bAABB)) {
@@ -89,9 +89,7 @@ export class PhysicsSystem extends System<typeof PhysicsItem> {
 		if(a.shape.type !== 'ShapeRect' || b.shape.type !== 'ShapeRect') throw new Error('invalid params');
 
 		const aAABB = a.getAABB(), bAABB = b.getAABB();
-		const asize = aAABB.size(), bsize = bAABB.size();
-		const apos = a.globalPosition, bpos = b.globalPosition;
-		const avel = a.velosity, bvel = b.velosity;
+		// const asize = aAABB.size(), bsize = bAABB.size();
 
 		if(aAABB.intersect(bAABB)) {
 			const c: Contact = {
@@ -105,27 +103,62 @@ export class PhysicsSystem extends System<typeof PhysicsItem> {
 			b.emit('BeginContact', c);
 
 
-			if(dsize.x < dsize.y) {
-				if(aAABB.max.x > bAABB.min.x) {
-					if(a.velosity.x > 0) a.velosity.x = 0;
-					a.position.x = bAABB.min.x-asize.x/2;
-				}
-				if(bAABB.max.x > aAABB.min.x) {
-					if(a.velosity.x < 0) a.velosity.x = 0;
-				}
-			} else {
-				// if(aAABB.max.y < bAABB.min.y) a.velosity.y = a.velosity.y < 0 ? a.velosity.y : 0;
-				// if(bAABB.max.y < aAABB.min.y) a.velosity.y = a.velosity.y > 0 ? a.velosity.y : 0;
-			}
+			const collition = (a: PhysicsItem, b: PhysicsItem) => {
+				if(a.computeMass() > b.computeMass()) [a, b] = [b, a];
+				const amass = 10 || a.computeMass(), bmass = 100 || b.computeMass();
+				const c = bmass/amass;
 
+				const adiff = dsize.new().sub(dsize.new().div(c));
+				const bdiff = dsize.new().div(c);
 
-			// if(Math.abs(bpos.x-apos.x) > Math.abs(bpos.y-apos.y)) {
-			// 	if(apos.x < bpos.x) console.log('r');
-			// 	else console.log('l');
-			// } else {
-			// 	if(apos.y < bpos.y) console.log('d');
-			// 	else console.log('u');
-			// }
+				// console.log(c, dsize.toString());
+				// console.log(`mass\na: ${amass}\nb: ${bmass}`);
+				// console.log(`diff\na: ${adiff}\nb: ${bdiff}`);
+
+				if(dsize.x < dsize.y) {
+					if(a.position.x < b.position.x) {
+						if(a.type_body === 'dynamic') {
+							if(a.velocity.x > 0) a.velocity.x = 0;
+							a.position.x -= adiff.x;
+						}
+						if(b.type_body === 'dynamic') {
+							if(b.velocity.x < 0) a.velocity.x = 0;
+							a.position.x -= bdiff.x;
+						}
+					} else {
+						if(a.type_body === 'dynamic') {
+							if(a.velocity.x < 0) a.velocity.x = 0;
+							a.position.x += adiff.x;
+						}
+						if(b.type_body === 'dynamic') {
+							if(b.velocity.x > 0) b.velocity.x = 0;
+							b.position.x += bdiff.x;
+						}
+					}
+				} else {
+					if(a.position.y < b.position.y) {
+						if(a.type_body === 'dynamic') {
+							if(a.velocity.y > 0) a.velocity.y = 0;
+							a.position.y -= adiff.y;
+						}
+						if(b.type_body === 'dynamic') {
+							if(b.velocity.y < 0) b.velocity.y = 0;
+							b.position.y -= bdiff.y;
+						}
+					} else {
+						if(a.type_body === 'dynamic') {
+							if(a.velocity.y < 0) a.velocity.y = 0;
+							a.position.y += adiff.y;
+						}
+						if(b.type_body === 'dynamic') {
+							if(b.velocity.y > 0) b.velocity.y = 0;
+							b.position.y += bdiff.y;
+						}
+					}
+				}
+			};
+
+			collition(a, b);
 
 			return true;
 		}
@@ -179,10 +212,18 @@ export class PhysicsSystem extends System<typeof PhysicsItem> {
 			const item = this._items[i];
 
 			if(item.type_body === 'dynamic') {
-				item.velosity.add(this.gravity);
-				item.velosity.inc(this.D);
+				item.angular_velocity *= 0.9;
+				item.rotation += item.angular_velocity;
+				// item.rotation += item.angular_velocity * item.velocity.module / 5;
+
+				item.velocity.add(this.gravity);
+				item.velocity.inc(this.D);
+				item.position.add(item.velocity);
 			}
 		}
+
+		// HACK:
+		return;
 
 		for(let i = 0; i < this._items.length; i++) {
 			const a = this._items[i];
@@ -198,14 +239,6 @@ export class PhysicsSystem extends System<typeof PhysicsItem> {
 				} else if(a.shape.type === 'ShapeRect' && b.shape.type === 'ShapeCircle') {
 					this.circle_rect(b, a);
 				}
-			}
-		}
-
-		for(let i = 0; i < this._items.length; i++) {
-			const item = this._items[i];
-
-			if(item.type_body === 'dynamic') {
-				item.position.add(item.velosity);
 			}
 		}
 	}
@@ -237,7 +270,7 @@ export class PhysicsItem extends Node2D {
 
 	public world: PhysicsSystem | null = null;
 
-	public velosity = new Vector2();
+	public velocity = new Vector2();
 	public angular_velocity: number = 0;
 
 	public density = 1;
@@ -260,7 +293,7 @@ export class PhysicsItem extends Node2D {
 		this['@tree_exiting'].on(ontree);
 	}
 
-	protected async _init(): Promise<void> {
+	protected override async _init(): Promise<void> {
 		await super._init();
 
 		this.density = 1;
@@ -272,6 +305,7 @@ export class PhysicsItem extends Node2D {
 	}
 
 	public computeMass(): number {
+		if(this.type_body === 'static') return Math.INF;
 		if(this.shape.type === 'ShapeRect') return this.shape.size.x * this.shape.size.y * this.density;
 		if(this.shape.type === 'ShapeCircle') return this.shape.radius ** 2 * Math.PI * this.density;
 		throw new Error('unknown shape');

@@ -19,7 +19,7 @@ export class Enemy extends Node2D {
 		yield 1000; }
 	});
 
-	protected async _init(this: Enemy): Promise<void> {
+	protected override async _init(this: Enemy): Promise<void> {
 		this.state.on(value => {
 			if(value === 'moveing') {
 				this.set_target_anim.reset().run(this);
@@ -29,7 +29,7 @@ export class Enemy extends Node2D {
 		});
 	}
 
-	protected _process(dt: number): void {
+	protected override _process(dt: number): void {
 		this.set_target_anim.tick(dt);
 
 		if(this.path.length) {
@@ -41,7 +41,7 @@ export class Enemy extends Node2D {
 		}
 	}
 
-	protected _draw({ ctx }: Viewport): void {
+	protected override _draw({ ctx }: Viewport): void {
 		ctx.beginPath();
 		ctx.fillStyle = '#288e81';
 		ctx.arc(0, 0, this.radius, 0, Math.TAU);

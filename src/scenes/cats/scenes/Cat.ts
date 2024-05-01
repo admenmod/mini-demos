@@ -67,7 +67,7 @@ export const animations = {
 
 
 export class Cat extends PhysicsItem {
-	public TREE() { return { Sprite }}
+	public override TREE() { return { Sprite }}
 	// aliases
 	public get $sprite() { return this.get('Sprite'); }
 
@@ -87,7 +87,7 @@ export class Cat extends PhysicsItem {
 		yield 0; while(true) yield* animations.speed_move(sprite, 50);
 	});
 
-	protected async _init(): Promise<void> {
+	protected override async _init(): Promise<void> {
 		await super._init();
 
 		this.type_body = 'dynamic';
@@ -111,7 +111,7 @@ export class Cat extends PhysicsItem {
 		});
 	}
 
-	protected _process(dt: number): void {
+	protected override _process(dt: number): void {
 		this.idle_anim.tick(dt);
 		this.running_anim.tick(dt);
 	}

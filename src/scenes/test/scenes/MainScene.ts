@@ -26,12 +26,33 @@ const vec3 = new Vector2(1, 0);
 let intersectRect = new AABB(new Vector2(), new Vector2());
 
 
+const marks: { pos: Vector2, alpha: number }[] = [];
+const addMark = (pos: Vector2) => { marks.push({ pos, alpha: 1 }); }
+const marks_anim = new Animation(function* () {
+	yield 0; while(true) { yield 50;
+		for(const mark of marks) {
+			mark.alpha = Math.clamp(0, mark.alpha-0.1, 1);
+		}
+
+		for(const mark of marks) {
+			if(mark.alpha <= 0) {
+				const l = marks.indexOf(mark);
+				if(!~l) throw new Error('delete mark'); 
+				marks.splice(l, 1);
+				break;
+			}
+		}
+	}
+});
+
+
+
 class Info extends Node2D {
 	public self!: MainScene;
-	protected async _init(): Promise<void> { this.draw_distance = Math.INF; }
-	protected _ready(): void { this.zIndex = 10000; }
+	protected override async _init(): Promise<void> { this.draw_distance = Math.INF; }
+	protected override _ready(): void { this.zIndex = 10000; }
 
-	protected _draw(viewport: Viewport): void {
+	protected override _draw(viewport: Viewport): void {
 		const { ctx, size } = viewport;
 
 		{
@@ -104,26 +125,36 @@ class Info extends Node2D {
 		ctx.lineTo(v2.x, v2.y);
 		ctx.stroke();
 		ctx.restore();
+
+
+		ctx.save();
+		for(const { pos, alpha } of marks) {
+			ctx.globalAlpha = alpha;
+			ctx.fillStyle = '#eeaaaa';
+			ctx.beginPath();
+			ctx.arc(pos.x, pos.y, 5, 0, Math.TAU);
+			ctx.closePath();
+			ctx.fill();
+		}
+		ctx.restore();
 	}
 }
 
 
 export class MainScene extends Control {
-	protected static async _load(scene: typeof this): Promise<void> {
-		await Promise.all([
-			Sprite.load(),
-			super._load(scene)
-		]);
+	protected static override async _load(scene: typeof this): Promise<void> {
+		await Sprite.load();
+		await super._load(scene);
 	}
 
-	public TREE() { return {
+	public override TREE() { return {
 		Camera2D,
 		GridMap,
 		SystemInfo,
 		Info,
 		Joystick,
 		Box1: Box,
-		Box2: Box,
+		Box2: Box
 	}}
 	// aliases
 	public get $camera() { return this.get('Camera2D'); }
@@ -135,7 +166,7 @@ export class MainScene extends Control {
 
 	public sensor_camera = new SensorCamera();
 
-	protected async _init(this: MainScene): Promise<void> {
+	protected override async _init(this: MainScene): Promise<void> {
 		await super._init();
 
 		this.$camera.viewport = viewport;
@@ -161,9 +192,7 @@ export class MainScene extends Control {
 		}).call(viewport, viewport.size);
 	}
 
-	protected _ready(this: MainScene): void {
-		this.processPriority = 1000;
-
+	protected override _ready(this: MainScene): void {
 		this.$camera.addChild(this.removeChild(this.$joystick.name, true));
 
 		const box1 = this.$box1, box2 = this.$box2;
@@ -172,18 +201,24 @@ export class MainScene extends Control {
 		box1.on('BeginContact', c => {
 			intersectRect = c.areaAABB;
 		});
+
+		marks_anim.run();
 	}
 
-	protected _process(this: MainScene, dt: number): void {
+	protected override _process(this: MainScene, dt: number): void {
+		marks_anim.tick(dt);
+
+
 		const joystick = this.$joystick;
 		const box1 = this.$box1, box2 = this.$box2;
 
-		const speed = 2;
-		box1.velosity.set().moveAngle(dt/16 * speed * joystick.value, joystick.angle);
+		const speed = 0.2;
+		box1.velocity.moveAngle(dt/16 * speed * joystick.value, joystick.angle);
 
 		let touch;
-		if(touch = touches.findTouch(t => t.isDown())) {
+		if(touch = touches.findTouch(t => t.isPress() || t.isUp() || t.isMove())) {
 			const pos = viewport.transformToLocal(touch.pos.new());
+			addMark(pos);
 		}
 	}
 }
