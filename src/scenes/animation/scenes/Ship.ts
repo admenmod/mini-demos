@@ -5,11 +5,34 @@ import { math as Math } from 'ver/helpers';
 import { Animation } from 'ver/Animation';
 import type { Viewport } from 'ver/Viewport';
 
+import { Node2D } from 'engine/scenes/Node2D.js';
 import { PhysicsItem } from 'engine/scenes/PhysicsItem.js';
 import { c } from 'src/animations.js';
 
 
+export class Flare extends Node2D {
+	public radius: number = 3;
+
+	protected override _ready(): void {
+		this.alpha = 0;
+	}
+
+	protected override _draw({ ctx }: Viewport): void {
+		ctx.filter = 'blur(1px)';
+		ctx.fillStyle = '#ffffff';
+		ctx.beginPath();
+		ctx.arc(0, 0, this.radius, 0, Math.TAU);
+		ctx.closePath();
+		ctx.fill();
+	}
+}
+
+
 export class Ship extends PhysicsItem {
+	public override TREE() { return { Flare }}
+	public get $flare() { return this.get('Flare'); }
+
+
 	public '@HP' = new Event<Ship, [last: number, prev: number]>(this);
 
 	private _HP: number = 0;
@@ -43,6 +66,8 @@ export class Ship extends PhysicsItem {
 		this.type_body = 'dynamic';
 
 		this.HP = 100;
+
+		this.$flare.position.add(0, -10);
 	}
 
 	protected override _ready(): void {

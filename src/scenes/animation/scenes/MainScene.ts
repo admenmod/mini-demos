@@ -18,6 +18,7 @@ import { BulletContainer } from './Bullets.js';
 
 import { touches, viewport } from 'src/canvas.js';
 import { audioContorller } from '../state.js';
+import { c } from 'src/animations.js';
 
 
 const marks: { pos: Vector2, alpha: number }[] = [];
@@ -31,7 +32,7 @@ const marks_anim = new Animation(function* () {
 		for(const mark of marks) {
 			if(mark.alpha <= 0) {
 				const l = marks.indexOf(mark);
-				if(!~l) throw new Error('delete mark'); 
+				if(!~l) throw new Error('delete mark');
 				marks.splice(l, 1);
 				break;
 			}
@@ -108,10 +109,26 @@ export class MainScene extends Control {
 
 	public sensor_camera = new SensorCamera();
 
+	public fireCD = 500;
+	public fire_delay = 100;
 	public is_fire = new State(false);
+
+	public fire_s = function* (self: MainScene) {
+		yield* c(c => {
+			self.$ship.$flare.alpha = c;
+		}, self.fire_delay/2, 50);
+
+		yield* c(c => {
+			self.$ship.$flare.alpha = 1-c;
+		}, self.fire_delay/2, 50);
+	}
 
 	public shot_anim = new Animation(function* (self: MainScene) {
 		yield 0; while(self.is_fire.last) {
+			audioContorller.play('shot');
+
+			yield* self.fire_s(self);
+
 			self.$bullets.c.create({
 				id: Math.randomInt(1e6, 1e7-1).toString(),
 				position: self.$ship.position.new(),
@@ -119,9 +136,7 @@ export class MainScene extends Control {
 				rotation: self.$ship.rotation,
 				angular_velocity: self.$ship.angular_velocity
 			});
-
-			audioContorller.play('shot');
-		yield 500; }
+		yield self.fireCD; }
 	});
 
 	protected override async _init(this: MainScene): Promise<void> {
