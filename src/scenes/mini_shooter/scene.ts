@@ -1,5 +1,3 @@
-import type { Viewport } from 'ver/Viewport';
-
 import { Node } from 'engine/scenes/Node.js';
 import { ProcessSystem } from 'engine/scenes/Node.js';
 import { RenderSystem } from 'engine/scenes/CanvasItem.js';
@@ -48,7 +46,5 @@ init.on(async () => {
 
 
 export const anims = new AnimationManager();
-process.on(dt => { for(const anim of anims.anims) anim.tick(dt); }, -1000);
 
-export const draws: ((viewport: Viewport) => unknown)[] = [];
-render.on(viewport => { for(const draw of draws) draw(viewport); }, -1000);
+process.on(dt => { for(const anim of anims.anims) anim.tick(dt); }, -1000);

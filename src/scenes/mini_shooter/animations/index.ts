@@ -1,11 +1,15 @@
 import { Vector2, vec2 } from 'ver/Vector2';
-import { math as Math, delay } from 'ver/helpers';
+import { math as Math } from 'ver/helpers';
 import { Animation } from 'ver/Animation';
+import type{ Viewport } from 'ver/Viewport';
 
 import { viewport } from 'src/canvas.js';
-import { audioContorller } from '../state.js';
-import { anims, draws } from '../scene.js';
-import { c, pipe } from 'src/animations.js';
+import { c } from 'src/animations.js';
+
+export const main_anim = new Animation(main);
+
+
+export const draws: ((viewport: Viewport) => unknown)[] = [];
 
 
 const Rect = (pos: Vector2, size: Vector2, color: string) => {
@@ -57,17 +61,15 @@ const Text = (text: string, pos: Vector2, color: string, alpha = 1) => {
 	return o;
 };
 
-const log = (v: any) => {
-	console.log(v);
-	return v;
-};
 
-// const cc = (c: number) => c**4;
-const cc = (c: number) => Math.sin(c/2 * Math.PI) **4;
+export function* main() {
+	const log = (v: any) => {
+		console.log(v);
+		return v;
+	};
 
-
-export async function main() {
-	await audioContorller.load('shot', 'assets/audio/lazer-shot.mp3');
+	// const cc = (c: number) => c**4;
+	const cc = (c: number) => Math.sin(c/2 * Math.PI) **4;
 
 	const rect = Rect(vec2(100, 0), vec2(100, 100), '#aa7777');
 	const text = Text('box', rect.pos.ref().accessors({
@@ -75,15 +77,23 @@ export async function main() {
 		set: (n, i) => n - rect.size[i] / 2
 	}), '#eeeeee');
 
-
-	const box_anim = anims.reg(new Animation(function* () {
+	yield 0; while(true) {
 		const d = viewport.size.new().sub(rect.size);
 
-		yield* c(c => rect.pos.x = d.x*c, 1000, 5, cc);
-		yield* c(c => rect.pos.y = d.y*c, 1000, 5, cc);
-		yield* c(c => rect.pos.x = d.x * -c + d.x, 1000, 5, cc);
-		yield* c(c => rect.pos.y = d.y * -c + d.y, 1000, 5, cc);
-	}));
+		yield* c(c => {
+			rect.pos.x = d.x*c;
+		}, 2000, 5, cc);
 
-	pipe(box_anim, box_anim);
+		yield* c(c => {
+			rect.pos.y = d.y*c;
+		}, 2000, 5, cc);
+
+		yield* c(c => {
+			rect.pos.x = d.x * -c + d.x;
+		}, 2000, 5, cc);
+
+		yield* c(c => {
+			rect.pos.y = d.y * -c + d.y;
+		}, 2000, 5, cc);
+	}
 }

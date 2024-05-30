@@ -60,7 +60,7 @@ export class BulletContainer extends Node2D {
 		this.c.assign(item, data);
 
 		item.id = data.id;
-		item.name = `Bullet[${data.id}]`;
+		item.name = `Bullet${data.id}`;
 		item.rotation = data.rotation;
 		item.position.set(data.position);
 		item.velocity.set(data.velocity);

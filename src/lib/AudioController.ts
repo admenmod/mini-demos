@@ -23,13 +23,25 @@ export class AudioContorller extends EventDispatcher {
 		return audio_buffer;
 	}
 
-	public play(id: string) {
+	public play(id: string, when: number = 0, offset?: number, duration?: number) {
 		const sound = this.ctx.createBufferSource();
 		sound.buffer = this.audio_buffers[id];
 		sound.connect(this.gain);
 
-		sound.start(this.ctx.currentTime);
+		sound.start(this.ctx.currentTime + when, offset, duration);
 
 		this['@play'].emit();
+	}
+
+	public wave(time: number, when: number = 0) {
+		if(!time) throw new Error('invalid time');
+
+		const oscillator = this.ctx.createOscillator();
+		oscillator.connect(this.gain);
+
+		oscillator.frequency.value = 240;
+
+		oscillator.start(this.ctx.currentTime + when);
+		oscillator.stop(this.ctx.currentTime + when + time);
 	}
 }

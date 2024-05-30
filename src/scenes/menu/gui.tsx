@@ -65,6 +65,7 @@ export const GUI: FC = () => {
 			<button style={buttonStyle} onClick={() => $start('Animation')}>Animation</button>
 			<button style={buttonStyle} onClick={() => $start('Input_code')}>Input code</button>
 			<button style={buttonStyle} onClick={() => $start('Targets_captured')}>Targets captured</button>
+			<button style={buttonStyle} onClick={() => $start('Mini_shooter')}>mini shooter</button>
 		</div>
 
 		{ !is_fullscreen ? <div theme-custom class='GUI' style={{

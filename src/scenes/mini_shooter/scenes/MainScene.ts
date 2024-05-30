@@ -1,4 +1,5 @@
 import { Vector2 } from 'ver/Vector2';
+import { State } from 'ver/State';
 import { math as Math } from 'ver/helpers';
 import { Animation } from 'ver/Animation';
 import type { Viewport } from 'ver/Viewport';
@@ -8,11 +9,16 @@ import { Node2D } from 'engine/scenes/Node2D.js';
 import { Control } from 'engine/scenes/Control.js';
 import { Sprite } from 'engine/scenes/Sprite.js';
 import { Camera2D } from 'engine/scenes/Camera2D.js';
+import { Button } from 'engine/scenes/gui/Button.js';
+import { Joystick } from 'engine/scenes/gui/Joystick.js';
 import { GridMap } from 'engine/scenes/gui/GridMap.js';
 import { SystemInfo } from 'engine/scenes/gui/SystemInfo.js';
+import { Ship } from './Ship.js';
+import { BulletContainer } from './Bullets.js';
 
 import { touches, viewport } from 'src/canvas.js';
-import { main } from '../animations/index.js';
+import { audioContorller } from '../state.js';
+import { c } from 'src/animations.js';
 
 
 const marks: { pos: Vector2, alpha: number }[] = [];
@@ -78,11 +84,17 @@ export class MainScene extends Control {
 	protected static override async _load(scene: typeof this): Promise<void> {
 		await Sprite.load();
 		await super._load(scene);
+
+		await audioContorller.load('shot', 'assets/audio/lazer-shot.mp3');
 	}
 
 	public override TREE() { return {
 		Camera2D,
 		GridMap,
+		BulletContainer,
+		Ship,
+		Joystick,
+		FireButton: Button,
 		Info,
 		SystemInfo
 	}}
@@ -90,8 +102,42 @@ export class MainScene extends Control {
 	public get $camera() { return this.get('Camera2D'); }
 	public get $gridMap() { return this.get('GridMap'); }
 	public get $info() { return this.get('Info'); }
+	public get $joystick() { return this.get('Joystick'); }
+	public get $btnfire() { return this.get('FireButton'); }
+	public get $ship() { return this.get('Ship'); }
+	public get $bullets() { return this.get('BulletContainer'); }
 
 	public sensor_camera = new SensorCamera();
+
+	public fireCD = 50;
+	public fire_delay = 50;
+	public is_fire = new State(false);
+
+	public fire_s = function* (self: MainScene, step: number) {
+		yield* c(c => {
+			self.$ship.$flare.alpha = c;
+		}, self.fire_delay/2, step);
+
+		yield* c(c => {
+			self.$ship.$flare.alpha = 1-c;
+		}, self.fire_delay/2, step);
+	}
+
+	public shot_anim = new Animation(function* (self: MainScene) {
+		yield 0; while(self.is_fire.last) {
+			audioContorller.play('shot');
+
+			yield* self.fire_s(self, 10);
+
+			self.$bullets.c.create({
+				id: Math.randomInt(1e6, 1e7-1).toString(),
+				position: self.$ship.position.new(),
+				velocity: self.$ship.velocity.new().moveAngle(10, self.$ship.rotation - Math.PI/2),
+				rotation: self.$ship.rotation,
+				angular_velocity: self.$ship.angular_velocity
+			});
+		yield self.fireCD-self.fire_delay; }
+	}, { isTimeSync: true, MIN_TIME: 0 });
 
 	protected override async _init(this: MainScene): Promise<void> {
 		await super._init();
@@ -100,7 +146,10 @@ export class MainScene extends Control {
 		this.$camera.current = true;
 
 		this.$camera.on('PreProcess', dt => {
-			this.sensor_camera.update(dt, touches, this.$camera);
+			this.$camera.position.moveTime(this.$ship.position, 5);
+			// this.$camera.rotation += Math.mod(this.$ship.rotation-this.$camera.rotation, -Math.PI, Math.PI) / 5;
+
+			if(!this.$joystick.touch) this.sensor_camera.update(dt, touches, this.$camera);
 
 			this.$gridMap.scroll.set(this.$camera.position);
 			this.$gridMap.position.set(this.$camera.position);
@@ -114,24 +163,57 @@ export class MainScene extends Control {
 
 		viewport.on('resize', size => {
 			const s = size.new().div(2);
-			s;
+
+			this.$joystick.position.set(-(s.x - 100), s.y - 100);
+
+			this.$btnfire.size.set(size.new().div(5));
+			this.$btnfire.position.set(+(s.x - 100), s.y - 100);
 		}).call(viewport, viewport.size);
+
+
+		this.is_fire.on(value => {
+			if(value) this.shot_anim.run(this);
+		});
 	}
 
 	protected override _ready(this: MainScene): void {
-		marks_anim.run();
+		this.$camera.addChild(this.removeChild(this.$joystick.name, true));
+		this.$camera.addChild(this.removeChild(this.$btnfire.name, true));
 
-		main();
+		this.$btnfire.text = 'FIRE';
+
+		this.$btnfire.on('pressed', () => this.is_fire(true));
+		this.$btnfire.on('up', () => this.is_fire(false));
+
+		marks_anim.run();
 	}
 
 	protected override _process(this: MainScene, dt: number): void {
 		marks_anim.tick(dt);
+		this.shot_anim.tick(dt);
 
 		for(const touch of touches.touches) {
 			if(touch.isPress() || touch.isUp() || touch.isMove()) {
 				const pos = viewport.transformToLocal(touch.pos.new()).add(viewport.size.new().div(2));
 				addMark(pos);
 			}
+		}
+
+		const ship = this.$ship;
+		const joystick = this.$joystick;
+
+
+		const speed = 0.2;
+		const angular_speed = 0.005;
+
+		if(!joystick.value) ship.state('idle');
+		else {
+			ship.state('running');
+
+			const dir = Math.mod(joystick.angle - ship.rotation + Math.PI/2, -Math.PI, Math.PI);
+			ship.angular_velocity += angular_speed*2 * Math.sign(dir);
+
+			ship.velocity.moveAngle(dt/16 * speed * joystick.value * Math.max(0, Math.cos(dir)), ship.rotation - Math.PI/2);
 		}
 	}
 }
