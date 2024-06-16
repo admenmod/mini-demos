@@ -22,7 +22,6 @@ if(virtualKeyboard) {
 export const mainloop = new MainLoop();
 export const canvas = new CanvasLayers().init(document.querySelector('#canvas')!);
 export const viewport = new Viewport(canvas.create('main').canvas.getContext('2d')!);
-canvas.on('resize', size => viewport.size.set(size), 1000);
 
 const GUIElement = document.querySelector<HTMLDivElement>('#GUI')!;
-export const touches = new TouchesController(GUIElement, e => e.currentTarget === GUIElement);
+export const touches = new TouchesController(GUIElement, e => e.target === GUIElement);

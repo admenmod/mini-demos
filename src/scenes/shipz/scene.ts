@@ -9,10 +9,18 @@ import { RenderSystem } from 'engine/scenes/CanvasItem.js';
 import { ControllersSystem } from 'engine/scenes/Control.js';
 import { PhysicsSystem } from 'engine/scenes/PhysicsItem.js';
 
-import { touches, viewport } from 'src/canvas.js';
-import { init, process, render } from './state.js';
+import { canvas, touches, viewport } from 'src/canvas.js';
+import { exit, init, process, render } from './state.js';
 
+import { NAME } from './index.js';
 import { MainScene } from './scenes/MainScene.js';
+
+
+init.on(() => {
+	canvas.on('resize', size => viewport.size.set(size), 1000, NAME)
+	.call(canvas, canvas.size, canvas.pixelRatio);
+});
+exit.on(() => canvas.off('resize', NAME));
 
 
 export const processSystem = new ProcessSystem();

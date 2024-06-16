@@ -4,8 +4,16 @@ import { math as Math } from 'ver/helpers';
 import { Animation } from 'ver/Animation';
 import type { Touch } from 'ver/TouchesController';
 
-import { touches, viewport } from 'src/canvas.js';
-import { init, process, render } from './state.js';
+import { NAME } from './index.js';
+import { canvas, touches, viewport } from 'src/canvas.js';
+import { exit, init, process, render } from './state.js';
+
+
+init.on(() => {
+	canvas.on('resize', size => viewport.size.set(size), 1000, NAME)
+	.call(canvas, canvas.size, canvas.pixelRatio);
+});
+exit.on(() => canvas.off('resize', NAME));
 
 
 const moveTime = function* (target: Vector2, value: Vector2) {

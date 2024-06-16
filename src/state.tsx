@@ -11,6 +11,7 @@ import * as Animation from './scenes/animation/index.js';
 import * as Test from './scenes/test/index.js';
 import * as Input_code from './scenes/input_code/index.js';
 import * as Mini_shooter from './scenes/mini_shooter/index.js';
+import * as Tools from './scenes/tools/index.js';
 
 
 export const $is_fullscreen = atom(false);
@@ -22,7 +23,7 @@ window.ondblclick = e => app.webkitRequestFullscreen();
 
 
 export type scene_name = keyof typeof scenes;
-export const scenes = { Menu, Mini, Cats, Shipz, Targets_captured, Animation, Test, Input_code, Mini_shooter } as const;
+export const scenes = { Menu, Mini, Cats, Shipz, Targets_captured, Animation, Test, Input_code, Mini_shooter, Tools } as const;
 
 export const $selected_scene_name = atom<scene_name>('Menu');
 

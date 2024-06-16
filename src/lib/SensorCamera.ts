@@ -9,7 +9,7 @@ export class SensorCamera extends EventDispatcher {
 	public '@scale' = new Event<SensorCamera, [scale: Vector2]>(this);
 
 
-	public isMoveing: boolean = true;
+	public isMoving: boolean = true;
 	public isScaling: boolean = true;
 	public isMovingOnScaling: boolean = false;
 
@@ -18,6 +18,7 @@ export class SensorCamera extends EventDispatcher {
 	public fixpos = new Vector2();
 	public slidingSpeed = new Vector2();
 
+	public pixelRatio: number;
 	public delay: number;
 	public maxspeed: number;
 	public minspeed: number;
@@ -28,6 +29,7 @@ export class SensorCamera extends EventDispatcher {
 	public boundingBox?: { l: number, r: number, t: number, b: number } | null = null;
 
 	constructor(p: {
+		pixelRatio?: number,
 		delay?: number,
 		minspeed?: number,
 		maxspeed?: number,
@@ -37,12 +39,13 @@ export class SensorCamera extends EventDispatcher {
 	} = {}) {
 		super();
 
-		this.delay = p.delay || 10;
-		this.maxspeed = p.maxspeed || 10;
-		this.minspeed = p.minspeed || 0.02;
+		this.pixelRatio = p.pixelRatio ?? 1;
+		this.delay = p.delay ?? 10;
+		this.maxspeed = p.maxspeed ?? 10;
+		this.minspeed = p.minspeed ?? 0.02;
 
-		this.maxscale = p.maxscale || 5;
-		this.minscale = p.minscale || 0.2;
+		this.maxscale = p.maxscale ?? 5;
+		this.minscale = p.minscale ?? 0.2;
 
 		this.boundingBox = p.boundingBox || null;
 	}
@@ -62,7 +65,7 @@ export class SensorCamera extends EventDispatcher {
 		position: Vector2,
 		scale: Vector2
 	}) {
-		if(this.isMoveing && !this.touch2) {
+		if(this.isMoving && !this.touch2) {
 			if(!this.touch) {
 				if(Math.abs(this.slidingSpeed.moduleSq) < this.minspeed) this.slidingSpeed.set(0);
 
@@ -76,7 +79,7 @@ export class SensorCamera extends EventDispatcher {
 				if(this.touch = touches.findTouch()) this.fixpos = viewport.position.new();
 			} else {
 				if(this.touch.isDown() && !this.touch.d.isSame(Vector2.ZERO)) {
-					viewport.position.set(this.fixpos.new().sub(this.touch.d.inc(viewport.scale)));
+					viewport.position.set(this.fixpos.new().sub(this.touch.d.inc(viewport.scale).inc(this.pixelRatio)));
 					(this as SensorCamera).emit('move', viewport.position);
 				}
 
@@ -119,9 +122,9 @@ export class SensorCamera extends EventDispatcher {
 					viewport.scale.y = Math.clamp(this.minscale, viewport.scale.y, this.maxscale);
 					(this as SensorCamera).emit('scale', viewport.scale);
 
-					if(this.isMoveing || this.isMovingOnScaling) {
+					if(this.isMovingOnScaling) {
 						viewport.position.set(this.fix.position.new().add(
-							this.fix.center.new().sub(center).inc(viewport.scale)
+							this.fix.center.new().sub(center).inc(viewport.scale).inc(this.pixelRatio)
 						));
 						if(this.boundingBox) {
 							viewport.position.x = Math.clamp(this.boundingBox.l, viewport.scale.x, this.boundingBox.r);

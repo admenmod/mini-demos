@@ -129,6 +129,7 @@ class Value<T> {
 }
 
 
+/*
 {
 const c = new Value('c', 10, `c`);
 const x = new Value('x', 1, `y * c`);
@@ -176,6 +177,7 @@ export class Input {
 		this.input.onfocus = () => this.focus.emit();
 	}
 }
+*/
 
 
 // const root_gui = document.body.querySelector('#GUI')!;
