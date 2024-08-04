@@ -21,12 +21,15 @@ export const StringBuilder: FC = () => {
 	let output: HTMLTextAreaElement | null = null;
 
 	return <>
-		<textarea ref={$ => input = $}
+		<textarea ref={$ => input = $} style={{ fontFamily: 'gg-sans' }}
 			onBlur={({ currentTarget: { value } }) => console.log(value.codePointAt(0), value.length, value.split(''))}
-			onInput={() => output!.value = codeShell<() => string>(`return t\`${input!.value}\`;`, env).call(null)}
+			onInput={() => output!.value = codeShell<() => string>(`return t\`${input!.value}\`;`, env, { insulate: false }).call(null)}
+			onKeyUp={e => {
+				if(e.ctrlKey && e.key === 'Enter') navigator.clipboard.writeText(output!.value);
+			}}
 		></textarea>
 
-		<textarea ref={$ => output = $} onKeyUp={e => {
+		<textarea ref={$ => output = $} style={{ fontFamily: 'gg-sans' }} onKeyUp={e => {
 			if(e.ctrlKey && e.key === 'Enter') navigator.clipboard.writeText(output!.value);
 		}}></textarea>
 	</>

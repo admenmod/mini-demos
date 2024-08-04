@@ -2,6 +2,14 @@
 	font-family: arkhip;
 	src: url(/assets/fonts/arkhip_font.ttf);
 }
+@font-face {
+	font-family: Hack;
+	src: url(/assets/fonts/HackNerdFont-Regular.ttf);
+}
+@font-face {
+	font-family: gg-sans;
+	src: url(/assets/fonts/gg-sans2.ttf);
+}
 
 :root {
 	--main-color-bg: #222222;
